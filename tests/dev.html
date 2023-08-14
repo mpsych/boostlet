@@ -3,6 +3,33 @@
 
     <script type='module' src='../src/index.js'></script>
 
+    <script type="text/javascript">
+      
+      function test_niivue_convert_to_png() {
+
+        // simulate niivue
+        window.nv = {};
+
+        Boostlet.init();
+
+        Boostlet.convert_to_png(new Uint8Array(1000), 10, 100);
+
+      }
+
+      function test_cornerstone2d_convert_to_png() {
+
+        // simulate cornerstone2d
+        window.cornerstone = {};
+
+        Boostlet.init();
+
+        Boostlet.convert_to_png(new Uint8Array(1000), 10, 100);
+
+      }
+
+
+    </script>
+
   </head>
 
   <body>

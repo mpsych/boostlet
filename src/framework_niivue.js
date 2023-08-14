@@ -7,6 +7,8 @@ export class NiiVue extends Framework {
     super(instance);
     this.name = 'niivue';
 
+    this.flip_on_png = true;
+
   }
 
 
