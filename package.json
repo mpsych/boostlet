@@ -1,0 +1,9 @@
+{
+  "name": "boostlet",
+  "version": "0.0.1-alpha",
+  "source": "src/index.js",
+  "main": "dist/boostlet.min.js",
+  "devDependencies": {
+    "parcel": "^2.9.3"
+  }
+}
