@@ -2,9 +2,9 @@ import {Framework} from './framework.js';
 
 export class NiiVue extends Framework {
   
-  constructor() {
+  constructor(instance) {
 
-    super();
+    super(instance);
     this.name = 'niivue';
 
   }

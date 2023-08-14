@@ -1,8 +1,9 @@
 export class Framework {
 
-  constructor() {
+  constructor(instance) {
 
-    this.name = 'generic'
+    this.name = 'generic';
+    this.instance = instance;
 
   }
 
