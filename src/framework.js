@@ -13,6 +13,14 @@ export class Framework {
 
   get_current_image() {
 
+    throw "Missing Implementation.";
+
+  }
+
+  select_box(callback) {
+
+    throw "Missing Implementation.";
+
   }
 
   convert_to_png(uint8array, width, height) {

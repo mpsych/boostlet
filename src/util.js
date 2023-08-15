@@ -38,14 +38,17 @@ export class Util {
 
   }
 
-  static async send_http_post(url, data) {
+  static async send_http_post(url, data, callback) {
 
-    xhr = new XMLHttpRequest();
-    xhr.open("POST", endpoint);
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4) {
         // request done
-        return xhr.response;
+        callback( xhr.response );
+
+        return;
+
       }
     }
 
@@ -54,8 +57,6 @@ export class Util {
   }
 
   static convert_to_png(uint8array, width, height, flip) {
-
-    console.log('Flipping:', flip)
 
     // we are using an offscreen canvas for this
     let offscreen = window.document.createElement('canvas');

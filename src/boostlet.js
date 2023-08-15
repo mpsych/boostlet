@@ -50,9 +50,9 @@ export class Boostlet {
   /**
    * Let's the user select a region of interest box.
    */
-  async select_box() {
+  async select_box(callback) {
 
-    throw "Missing Implementation.";
+    this.framework.select_box(callback);
 
   }
 
@@ -77,9 +77,9 @@ export class Boostlet {
   /**
    * Sends a HTTP POST request to a url with some data.
    */
-  async send_http_post(url, data) {
+  async send_http_post(url, data, callback) {
 
-    Util.send_http_post(url, data);
+    Util.send_http_post(url, data, callback);
 
   }
 
