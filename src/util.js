@@ -1,6 +1,6 @@
 import {Framework} from './framework.js';
-import {Cornerstone2D} from './framework_cornerstone2d.js';
-import {NiiVue} from './framework_niivue.js';
+import {Cornerstone2D} from './frameworks/cornerstone2d.js';
+import {NiiVue} from './frameworks/niivue.js';
 
 export class Util {
   

@@ -1,7 +1,6 @@
 import {Util} from './util.js';
 
 import {Framework} from './framework.js';
-import {NiiVue} from './framework_niivue.js';
 
 export class Boostlet {
 

@@ -1,4 +1,4 @@
-import {Framework} from './framework.js';
+import {Framework} from '../framework.js';
 
 export class Cornerstone2D extends Framework {
   
