@@ -54,8 +54,45 @@ async function segment_box(topleft, bottomright) {
   embedding = new ort.Tensor("float32", new Float32Array(uint8arr.buffer), [1, 256, 64, 64]);
   input['low_res_embedding'] = embedding;
 
+  let x1 = topleft.x;
+  let y1 = topleft.y;
+  let x2 = bottomright.x;
+  let y2 = bottomright.y;
 
-  // TODO
+  input['point_coords'] = new ort.Tensor("float32", new Float32Array([x1,y1,x2,y2]), [1, 2, 2]);
+
+
+  // 2 and 3 mean top-left-bottom-right box
+  input['point_labels'] = new ort.Tensor("float32", new Float32Array([2,3]), [1, 2]);
+
+  // original image size
+  input['image_size'] = new ort.Tensor("float32", new Float32Array([height, width]));
+
+  // empty mask
+  input['last_pred_mask'] = new ort.Tensor("float32", new Float32Array(256 * 256), [1, 1, 256, 256]);
+  input['has_last_pred'] = new ort.Tensor("float32", new Float32Array([0]));
+
+  return session.run( input ).then( output => {
+
+    // ctx = canvas.getContext('2d');
+
+    // image = ctx.getImageData(0,0,width,height)
+
+    // mask = arrayToImageData(output.output.data, image, width, height);
+    
+    // ctx.putImageData(mask, 0, 0);
+
+    // return output.output.data;
+
+    console.log(output);
+
+    // TODO use Boostlet to display output
+
+  }).catch(err => {
+
+    console.error(err);
+
+  });
 
 };
 
