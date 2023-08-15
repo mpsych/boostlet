@@ -16,7 +16,7 @@ export class Util {
       
       framework = new NiiVue(window.niivue);
 
-    } else if (typeof cornerstone != 'undefined') {
+    } else if (typeof window.cornerstone != 'undefined') {
 
       framework = new Cornerstone2D(window.cornerstone);
 

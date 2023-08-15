@@ -26,6 +26,8 @@ export class Boostlet {
     if (typeof name != 'undefined' && typeof instance != 'undefined') {
 
       console.log('Framework forced by user!');
+      throw "Forced Framework Not Implemented.";
+      // TODO
 
     } else {
 
