@@ -20,21 +20,51 @@ export class Cornerstone2D extends Framework {
 
   }
 
-  get_current_image() {
-
-    // TODO this is hacky going through the canvas
-    // later should grab the real volume data
+  get_current_image(from_canvas) {
 
     let element = this.instance.getEnabledElements()[0];
-    let canvas = element.canvas;
-    let height = canvas.height;
-    let width = canvas.width;
+    let pixels = null;
+    let width = null;
+    let height = null;
 
-    let  ctx = canvas.getContext('2d');
+    if (typeof from_canvas != 'undefined') {
 
-    let pixels = ctx.getImageData(0, 0, width, height);
+      // TODO this is hacky going through the canvas
+      // later should grab the real volume data
 
-    return pixels;
+      let canvas = element.canvas;
+      width = canvas.width;
+      height = canvas.height;
+
+      let  ctx = canvas.getContext('2d');
+
+      let imagedata = ctx.getImageData(0, 0, width, height);
+      pixels = imagedata.data;
+
+    } else {
+
+      // this is the real image slice data
+      let imagedata = element.image;
+      pixels = imagedata.getPixelData();
+      width = imagedata.width;
+      height = imagedata.height;
+
+    }
+
+    return {'data':pixels, 'width':width, 'height':height};
+
+  }
+
+  set_current_image(new_pixels) {
+
+    let element = this.instance.getEnabledElements()[0];
+    let pixels = element.image.getPixelData();
+
+    // Set the new pixel values
+    pixels.set(new_pixels);
+
+    // Re-render the current slice
+    cornerstone.renderGrayscaleImage(element, true);
 
   }
 

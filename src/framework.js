@@ -11,7 +11,13 @@ export class Framework {
 
   }
 
-  get_current_image() {
+  get_current_image(from_canvas) {
+
+    throw "Missing Implementation.";
+
+  }
+
+  set_current_image(new_pixels) {
 
     throw "Missing Implementation.";
 

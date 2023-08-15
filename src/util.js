@@ -99,4 +99,38 @@ export class Util {
 
   }
 
+  static filter(pixels, width, height, kernel) {
+
+    const kernelSize = Math.sqrt(kernel.length);
+    const halfKernelSize = Math.floor(kernelSize / 2);
+
+    const new_pixels = pixels.slice();
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const dstIndex = y * width + x;
+
+        let newValue = 0;
+        for (let ky = 0; ky < kernelSize; ky++) {
+          for (let kx = 0; kx < kernelSize; kx++) {
+            const srcX = x + kx - halfKernelSize;
+            const srcY = y + ky - halfKernelSize;
+            const srcIndex = srcY * width + srcX;
+
+            const kernelValue = kernel[ky * kernelSize + kx];
+            newValue += pixels[srcIndex] * kernelValue;
+          }
+        }
+
+        new_pixels[dstIndex] = newValue;
+
+      }
+    }
+
+    return new_pixels;
+
+  }
+
+
+
 }

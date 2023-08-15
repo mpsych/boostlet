@@ -88,9 +88,19 @@ export class Boostlet {
    * TODO: Optional bounding box should be supported.
    * 
    */
-  get_current_image() {
+  get_current_image(from_canvas) {
 
-    return this.framework.get_current_image();
+    return this.framework.get_current_image(from_canvas);
+
+  }
+
+  /**
+   * Sets the current image (2D).
+   * 
+   */
+  set_current_image(new_pixels) {
+
+    return this.framework.set_current_image(new_pixels);
 
   }
 
@@ -100,6 +110,12 @@ export class Boostlet {
   convert_to_png(uint8array, width, height) {
 
     return this.framework.convert_to_png(uint8array, width, height);
+
+  }
+
+  filter(pixels, width, height, kernel) {
+
+    return Util.filter(pixels, width, height, kernel);
 
   }
 
