@@ -11,6 +11,12 @@ export class NiiVue extends Framework {
 
     this.flip_on_png = true;
 
+    this.onMouseDown = false;
+    this.x1 = null;
+    this.y1 = null;
+    this.x2 = null;
+    this.y2 = null;
+
   }
 
   get_image(from_canvas) {
@@ -120,6 +126,42 @@ export class NiiVue extends Framework {
     // replace nv canvas with new one
     originalcanvas.parentNode.replaceChild(newcanvas, originalcanvas);
 
+
+  }
+
+  select_box(callback) {
+
+    // TODO also hacky until official API supports this
+
+    let canvas = this.instance.canvas;
+
+
+    canvas.addEventListener('mousedown', function (e) {
+      this.isMouseDown = true;
+      this.x1=e.x;
+      this.y1=e.y;
+    }.bind(this));
+
+    canvas.addEventListener('mousemove', function (e) {
+      if (this.isMouseDown) {
+        this.x2 = e.x;
+        this.y2 = e.y;
+        this.instance.drawSelectionBox([this.x1, this.y1, this.x2-this.x1, this.y2-this.y1]);
+      }
+    }.bind(this));
+
+
+    canvas.addEventListener('mouseup', function (e) {
+      this.x2 = e.x;
+      this.y2 = e.y;
+      this.isMouseDown = false;
+
+      let topleft = {x: this.x1, y: this.y1};
+      let bottomright = {x: this.x2, y: this.y2};
+
+      callback(topleft, bottomright);
+
+    }.bind(this));
 
   }
 

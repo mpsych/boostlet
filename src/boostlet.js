@@ -90,7 +90,7 @@ export class Boostlet {
    */
   get_image(from_canvas) {
 
-    return this.framework.get_current_image(from_canvas);
+    return this.framework.get_image(from_canvas);
 
   }
 
@@ -100,7 +100,7 @@ export class Boostlet {
    */
   set_image(new_pixels) {
 
-    return this.framework.set_current_image(new_pixels);
+    return this.framework.set_image(new_pixels);
 
   }
 
