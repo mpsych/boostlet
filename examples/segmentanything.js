@@ -27,7 +27,7 @@ function run() {
 function setup_segment_anything() {
 
   url = 'https://model-zoo.metademolab.com/predictions/segment_everything_box_model';
-  image = Boostlet.get_current_image(true); // grab image from canvas
+  image = Boostlet.get_image(true); // grab image from canvas
   pixels = image.data;
   width = image.width;
   height = image.height;

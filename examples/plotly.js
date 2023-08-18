@@ -11,7 +11,7 @@ function run() {
   // detect visualization framework
   Boostlet.init();
 
-  all_pixels = Boostlet.get_current_image().data;
+  all_pixels = Boostlet.get_image().data;
 
   // load Plotly.js library and start plotting
   Boostlet.load_script('https://cdn.plot.ly/plotly-2.25.2.min.js', plot);
@@ -19,11 +19,6 @@ function run() {
 }
 
 function plot() {
-
-  let trace = {
-      x: all_pixels,
-      type: 'histogram',
-    };
 
   // create div for plot
   let container = window.document.createElement('div');
@@ -39,6 +34,9 @@ function plot() {
   window.document.body.appendChild(container);
 
   // plot the data
-  Plotly.newPlot('plotlyDiv', [trace]);
+  Plotly.newPlot('plotlyDiv', [{
+    x: all_pixels,
+    type = 'histogram'
+  }]);
 
 }

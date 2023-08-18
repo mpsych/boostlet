@@ -88,7 +88,7 @@ export class Boostlet {
    * TODO: Optional bounding box should be supported.
    * 
    */
-  get_current_image(from_canvas) {
+  get_image(from_canvas) {
 
     return this.framework.get_current_image(from_canvas);
 
@@ -98,7 +98,7 @@ export class Boostlet {
    * Sets the current image (2D).
    * 
    */
-  set_current_image(new_pixels) {
+  set_image(new_pixels) {
 
     return this.framework.set_current_image(new_pixels);
 

@@ -22,7 +22,7 @@ export class Cornerstone2D extends Framework {
 
   }
 
-  get_current_image(from_canvas) {
+  get_image(from_canvas) {
 
     let element = this.instance.getEnabledElements()[0];
     let pixels = null;
@@ -57,7 +57,7 @@ export class Cornerstone2D extends Framework {
 
   }
 
-  set_current_image(new_pixels) {
+  set_image(new_pixels) {
 
     let element = this.instance.getEnabledElements()[0];
     let pixels = element.image.getPixelData();

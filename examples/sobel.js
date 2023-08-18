@@ -12,7 +12,7 @@ function run() {
   // detect visualization framework
   Boostlet.init();
 
-  image = Boostlet.get_current_image();
+  image = Boostlet.get_image();
 
   kernel = [
     -1, 0, 1,
@@ -22,6 +22,6 @@ function run() {
 
   filtered = Boostlet.filter(image.data, image.width, image.height, kernel);
 
-  Boostlet.set_current_image( filtered );
+  Boostlet.set_image( filtered );
 
 }

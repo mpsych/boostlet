@@ -13,7 +13,7 @@ export class NiiVue extends Framework {
 
   }
 
-  get_current_image(from_canvas) {
+  get_image(from_canvas) {
 
     let element = this.instance.canvas;
     let pixels = null;
@@ -76,7 +76,7 @@ export class NiiVue extends Framework {
 
   }
 
-  set_current_image(new_pixels) {
+  set_image(new_pixels) {
 
     // TODO this is hacky since we dont work with the real volume yet
     // create new canvas
