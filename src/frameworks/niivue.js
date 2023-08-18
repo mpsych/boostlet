@@ -103,6 +103,12 @@ export class NiiVue extends Framework {
 
     ctx.putImageData(new_image_data, 0, 0);
 
+    // some flipping action
+    ctx.save();
+    ctx.scale(1, -1);
+    ctx.drawImage(newcanvas, 0, -newcanvas.height);
+    ctx.restore();
+
 
     newcanvas.onclick = function() {
 
