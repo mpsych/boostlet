@@ -131,6 +131,36 @@ export class Util {
 
   }
 
+  static grayscale_to_rgba(grayscale) {
 
+    const rgba = new Uint8Array(grayscale.length * 4);
+
+    for (let i = 0; i < grayscale.length; i++) {
+      const g = grayscale[i];
+      const index = i * 4;
+
+      rgba[index] = g;
+      rgba[index + 1] = g;
+      rgba[index + 2] = g;
+      rgba[index + 3] = 255; 
+    }
+
+    return rgba;
+
+  }
+
+  static rgba_to_grayscale(rgba) {
+
+    const grayscale = new Uint8Array(rgba.length / 4);
+
+    for (let i = 0; i < rgba.length; i += 4) {
+
+      grayscale[i / 4] = rgba[i];
+
+    }
+
+    return grayscale;
+
+  }
 
 }

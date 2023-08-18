@@ -1,5 +1,7 @@
 import {Framework} from '../framework.js';
 
+import {Util} from '../util.js';
+
 export class Cornerstone2D extends Framework {
   
   constructor(instance) {
