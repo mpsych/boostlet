@@ -13,7 +13,7 @@ function run() {
 
   all_pixels = Boostlet.get_image().data;
 
-  // load Plotly.js library and start plotting
+  // load Plotly.js library and start plotting in the onload callback
   Boostlet.load_script('https://cdn.plot.ly/plotly-2.25.2.min.js', plot);
 
 }
@@ -36,7 +36,7 @@ function plot() {
   // plot the data
   Plotly.newPlot('plotlyDiv', [{
     x: all_pixels,
-    type = 'histogram'
+    type: 'histogram'
   }]);
 
 }
