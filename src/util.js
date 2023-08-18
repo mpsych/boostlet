@@ -28,14 +28,19 @@ export class Util {
 
   }
 
-  static async load_script(url) {
+  static async load_script(url, callback) {
 
     const script = window.document.createElement("script")
     script.type = "text/javascript"
     script.src = url;
+
+    if (typeof callback != 'undefined') {
+      script.onload = callback;
+    }
+
     window.document.head.appendChild(script);
     eval(script);
-
+    
   }
 
   static async send_http_post(url, data, callback) {

@@ -67,9 +67,9 @@ export class Boostlet {
   /**
    * Loads an external javascript file asynchronously. 
    */
-  async load_script(url) {
+  async load_script(url, callback) {
 
-    Util.load_script(url);
+    Util.load_script(url, callback);
 
   }
 
