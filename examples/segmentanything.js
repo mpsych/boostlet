@@ -43,8 +43,6 @@ function setup_segment_anything() {
 }
 
 async function segment_box(topleft, bottomright) {
-  
-  console.log(topleft, bottomright);
 
   session = await ort.InferenceSession.create('https://cs666.org/onnx/sam.onnx');
 
@@ -72,21 +70,9 @@ async function segment_box(topleft, bottomright) {
   input['last_pred_mask'] = new ort.Tensor("float32", new Float32Array(256 * 256), [1, 1, 256, 256]);
   input['has_last_pred'] = new ort.Tensor("float32", new Float32Array([0]));
 
-  return session.run( input ).then( output => {
+  return session.run( input ).then( result => {
 
-    // ctx = canvas.getContext('2d');
-
-    // image = ctx.getImageData(0,0,width,height)
-
-    // mask = arrayToImageData(output.output.data, image, width, height);
-    
-    // ctx.putImageData(mask, 0, 0);
-
-    // return output.output.data;
-
-    console.log(output);
-
-    // TODO use Boostlet to display output
+    Boostlet.set_mask(result.output.data);
 
   }).catch(err => {
 

@@ -70,6 +70,31 @@ export class Cornerstone2D extends Framework {
 
   }
 
+  set_mask(new_mask) {
+
+    // TODO this needs to use segmentation/labelmap layers
+    // from cornerstone
+    // right now, this is modifying the canvas
+
+    let element = this.instance.getEnabledElements()[0];
+
+    let canvas = element.canvas;
+    width = canvas.width;
+    height = canvas.height;
+
+    let ctx = canvas.getContext('2d');
+
+    let imagedata = ctx.getImageData(0, 0, width, height);
+    let pixels = imagedata.data;
+
+    let masked_image = Util.harden_mask(pixels, new_mask);
+
+    let masked_image_as_imagedata = new ImageData(masked_image, width, height);
+
+    ctx.putImageData(masked_image_as_imagedata, 0, 0);
+    
+  }
+
   select_box(callback) {
 
     this.cornerstonetools_instance.setToolActive('RectangleRoi', { mouseButtonMask: 1 })

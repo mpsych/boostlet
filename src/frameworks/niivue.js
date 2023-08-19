@@ -82,7 +82,12 @@ export class NiiVue extends Framework {
 
   }
 
-  set_image(new_pixels) {
+  /**
+   * Sets the NiiVue.js image.
+   * 
+   * If rgba==true, we do *not* convert to RGBA before setting on canvas.
+   **/
+  set_image(new_pixels, rgba, noflip) {
 
     // TODO this is hacky since we dont work with the real volume yet
     // create new canvas
@@ -99,21 +104,35 @@ export class NiiVue extends Framework {
     // put new_pixels down
     let ctx = newcanvas.getContext('2d');
 
-    let new_pixels_rgba = Util.grayscale_to_rgba(new_pixels);
-    // let new_pixels_rgba = new_pixels;
+    let new_pixels_rgba = null;
+
+    if (typeof rgba == 'undefined') {
+
+      new_pixels_rgba = Util.grayscale_to_rgba(new_pixels);
+
+    } else {
+
+      new_pixels_rgba = new_pixels;
+
+    }
 
     let new_pixels_clamped = new Uint8ClampedArray(new_pixels_rgba);
 
+
+    console.log(new_pixels_clamped, newcanvas.width, newcanvas.height);
     let new_image_data = new ImageData(new_pixels_clamped, newcanvas.width, newcanvas.height);
     
 
     ctx.putImageData(new_image_data, 0, 0);
 
-    // some flipping action
-    ctx.save();
-    ctx.scale(1, -1);
-    ctx.drawImage(newcanvas, 0, -newcanvas.height);
-    ctx.restore();
+    if (typeof noflip == 'undefined') {
+      console.log('flipping');
+      // some flipping action
+      ctx.save();
+      ctx.scale(1, -1);
+      ctx.drawImage(newcanvas, 0, -newcanvas.height);
+      ctx.restore();
+    }
 
 
     newcanvas.onclick = function() {
@@ -125,6 +144,24 @@ export class NiiVue extends Framework {
 
     // replace nv canvas with new one
     originalcanvas.parentNode.replaceChild(newcanvas, originalcanvas);
+
+
+  }
+
+  set_mask(new_mask) {
+
+    // merge image + mask
+    // and then call set_image with that information
+
+    let image = this.get_image(true);
+
+    let image_rgba = Util.grayscale_to_rgba(image.data);
+
+    let masked_image = Util.harden_mask(image_rgba, new_mask);
+
+    console.log(masked_image);
+
+    this.set_image(masked_image, true, false);
 
 
   }

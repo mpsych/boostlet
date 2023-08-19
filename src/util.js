@@ -40,7 +40,7 @@ export class Util {
 
     window.document.head.appendChild(script);
     eval(script);
-    
+
   }
 
   static async send_http_post(url, data, callback) {
@@ -85,16 +85,11 @@ export class Util {
 
     if (typeof flip != 'undefined') {
       offscreen_ctx.scale(1, -1); // Flip vertically
-    }
-    
-    let c_height = height;
-
-    if (typeof flip != 'undefined') {
-      c_height = -height;
+      offscreen_ctx.drawImage(offscreen, 0, -height); 
+      offscreen_ctx.restore();
     }
 
-    offscreen_ctx.drawImage(offscreen, 0, c_height); 
-    offscreen_ctx.restore();
+
 
     let base64 = offscreen.toDataURL('image/png')
     base64 = base64.replace("data:image/png;base64,","")
@@ -165,6 +160,48 @@ export class Util {
     }
 
     return grayscale;
+
+  }
+
+  /**
+   * Harden a mask into a grayscale pixel array.
+   * 
+   * pixels needs to be RGBA
+   * 
+   * and mask binary.
+   * 
+   * maskcolor is optional and falls back to blue.
+   * 
+   **/
+  static harden_mask(pixels, mask, maskcolor) {
+
+    // From: https://github.com/facebookresearch/segment-anything/blob/40df6e4046d8b07ab8c4519e083408289eb43032/demo/src/components/helpers/maskUtils.tsx
+    // Copyright (c) Meta Platforms, Inc. and affiliates.
+    // All rights reserved.
+
+    console.log('p', pixels)
+    console.log('m', mask)
+
+    let maskcolor_ = [0, 114, 189, 255];
+
+    if (typeof maskcolor != 'undefined') {
+      
+      maskcolor_ = maskcolor;
+      
+    } 
+
+    for (var i = 0; i < mask.length; i++) {
+
+      if (mask[i] > 0.0) {
+        pixels[4 * i + 0] = maskcolor_[0];
+        pixels[4 * i + 1] = maskcolor_[1];
+        pixels[4 * i + 2] = maskcolor_[2];
+        pixels[4 * i + 3] = maskcolor_[3];
+      }
+
+    }
+
+    return pixels;
 
   }
 

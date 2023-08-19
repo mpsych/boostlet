@@ -23,6 +23,12 @@ export class Framework {
 
   }
 
+  set_mask(new_mask) {
+
+    throw "Missing Implementation.";
+    
+  }
+
   select_box(callback) {
 
     throw "Missing Implementation.";

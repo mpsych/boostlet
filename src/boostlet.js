@@ -105,6 +105,16 @@ export class Boostlet {
   }
 
   /**
+   * Sets the current mask (2D).
+   * 
+   */
+  set_mask(new_mask) {
+
+    return this.framework.set_mask(new_mask);
+
+  }
+
+  /**
    * Encode raw image data to PNG.
    */
   convert_to_png(uint8array, width, height) {
