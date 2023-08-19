@@ -67,7 +67,6 @@ export class Util {
     let offscreen = window.document.createElement('canvas');
     offscreen.width = width;
     offscreen.height = height;
-    window.document.body.append(offscreen);
 
     let offscreen_ctx = offscreen.getContext('2d');
 
@@ -83,7 +82,7 @@ export class Util {
     offscreen_ctx.putImageData(imgdata, 0, 0);
     
 
-    if (Util.is_defined(flip)) {
+    if (flip) {
 
       offscreen_ctx.save();
       offscreen_ctx.scale(1, -1); // Flip vertically
