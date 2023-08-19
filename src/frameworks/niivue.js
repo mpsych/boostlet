@@ -63,8 +63,6 @@ export class NiiVue extends Framework {
       // convert rgba pixels to grayscale
       pixels = Util.rgba_to_grayscale(pixels);
 
-      console.log('to grayscale')
-
     } else {
 
       // TODO
@@ -109,7 +107,6 @@ export class NiiVue extends Framework {
     if (Util.is_defined(is_rgba)) {
 
       new_pixels_rgba = new_pixels;
-      console.log('RAW', new_pixels_rgba)
 
     } else {
 
@@ -152,7 +149,7 @@ export class NiiVue extends Framework {
     // merge image + mask
     // and then call set_image with that information
 
-    let image = this.get_image();
+    let image = this.get_image(true);
 
     let masked_image = Util.harden_mask(image.data, new_mask);
 
