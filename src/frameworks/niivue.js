@@ -151,9 +151,29 @@ export class NiiVue extends Framework {
 
     let image = this.get_image(true);
 
+    // TODO here we need to flip one more time, this is until
+    // we use the official niivue infrastructure for adding
+    // a segmentation layer
+    let originalcanvas = this.instance.canvas;
+
+    let newcanvas = window.document.createElement('canvas');
+    newcanvas.width = originalcanvas.width;
+    newcanvas.height = originalcanvas.height;
+    // put new_pixels down
+    let ctx = newcanvas.getContext('2d');
+    let imageclamped = new Uint8ClampedArray(image.data);
+    let imagedata = new ImageData(imageclamped, image.width, image.height);
+    ctx.putImageData(imagedata, 0, 0);
+    ctx.save();
+    ctx.scale(1, -1);
+    ctx.drawImage(newcanvas, 0, -newcanvas.height);
+    ctx.restore();
+    image = ctx.getImageData(0, 0, newcanvas.width, newcanvas.height);
+    // end of flip
+
     let masked_image = Util.harden_mask(image.data, new_mask);
 
-    this.set_image(masked_image, true);
+    this.set_image(masked_image, true, true); // rgba data, no flip
 
 
   }

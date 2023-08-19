@@ -95,10 +95,10 @@ export class Util {
     let base64 = offscreen.toDataURL('image/png');
 
     // for debugging, download image
-    // const link = window.document.createElement("a");
-    // link.href = base64;
-    // link.download = 'test.png';
-    // link.click();
+    const link = window.document.createElement("a");
+    link.href = base64;
+    link.download = 'test.png';
+    link.click();
 
     base64 = base64.replace("data:image/png;base64,","");
 
