@@ -8,15 +8,15 @@ export class Util {
 
     let framework = null;
 
-    if (typeof window.nv != 'undefined') {
+    if (Util.is_defined(window.nv)) {
     
       framework = new NiiVue(window.nv);
     
-    } else if (typeof window.niivue != 'undefined') {
+    } else if (Util.is_defined(window.niivue)) {
       
       framework = new NiiVue(window.niivue);
 
-    } else if (typeof window.cornerstone != 'undefined') {
+    } else if (Util.is_defined(window.cornerstone)) {
 
       framework = new Cornerstone2D(window.cornerstone);
 
@@ -34,7 +34,7 @@ export class Util {
     script.type = "text/javascript"
     script.src = url;
 
-    if (typeof callback != 'undefined') {
+    if (Util.is_defined(callback)) {
       script.onload = callback;
     }
 
@@ -81,18 +81,27 @@ export class Util {
     }
       // update canvas with new data
     offscreen_ctx.putImageData(imgdata, 0, 0);
-    offscreen_ctx.save();
+    
 
-    if (typeof flip != 'undefined') {
+    if (Util.is_defined(flip)) {
+
+      offscreen_ctx.save();
       offscreen_ctx.scale(1, -1); // Flip vertically
       offscreen_ctx.drawImage(offscreen, 0, -height); 
       offscreen_ctx.restore();
+
     }
 
+    let base64 = offscreen.toDataURL('image/png');
 
+    // for debugging, download image
+    // const link = window.document.createElement("a");
+    // link.href = base64;
+    // link.download = 'test.png';
+    // link.click();
 
-    let base64 = offscreen.toDataURL('image/png')
-    base64 = base64.replace("data:image/png;base64,","")
+    base64 = base64.replace("data:image/png;base64,","");
+
     let pngpixels = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
     return pngpixels;
@@ -175,16 +184,14 @@ export class Util {
    **/
   static harden_mask(pixels, mask, maskcolor) {
 
-    // From: https://github.com/facebookresearch/segment-anything/blob/40df6e4046d8b07ab8c4519e083408289eb43032/demo/src/components/helpers/maskUtils.tsx
+    // Modified from: https://github.com/facebookresearch/segment-anything/blob/40df6e4046d8b07ab8c4519e083408289eb43032/demo/src/components/helpers/maskUtils.tsx
     // Copyright (c) Meta Platforms, Inc. and affiliates.
     // All rights reserved.
 
-    console.log('p', pixels)
-    console.log('m', mask)
 
     let maskcolor_ = [0, 114, 189, 255];
 
-    if (typeof maskcolor != 'undefined') {
+    if (Util.is_defined(maskcolor)) {
       
       maskcolor_ = maskcolor;
       
@@ -202,6 +209,12 @@ export class Util {
     }
 
     return pixels;
+
+  }
+
+  static is_defined(variable) {
+
+    return (typeof variable != 'undefined');
 
   }
 

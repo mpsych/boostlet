@@ -26,45 +26,44 @@ export class NiiVue extends Framework {
     let width = null;
     let height = null;
 
-    // TODO only support from_canvas now
-    from_canvas = true;
 
-    if (typeof from_canvas != 'undefined') {
+    // TODO this is hacky going through the canvas
+    // later should grab the real volume data
 
-      // TODO this is hacky going through the canvas
-      // later should grab the real volume data
+    let old_crosshaircolor = this.instance.opts.crosshairColor;
+    let old_crosshairwidth = this.instance.opts.crosshairWidth;
 
-      let old_crosshaircolor = this.instance.opts.crosshairColor;
-      let old_crosshairwidth = this.instance.opts.crosshairWidth;
-
-      this.instance.setCrosshairColor([0,0,0,0]);
-      this.instance.opts.crosshairWidth=0;
-      this.instance.updateGLVolume();
+    this.instance.setCrosshairColor([0,0,0,0]);
+    this.instance.opts.crosshairWidth=0;
+    this.instance.updateGLVolume();
 
 
-      let ctx = this.instance.gl;
+    let ctx = this.instance.gl;
 
-      
-      width = ctx.drawingBufferWidth;
-      height = ctx.drawingBufferHeight;
+    
+    width = ctx.drawingBufferWidth;
+    height = ctx.drawingBufferHeight;
 
-      pixels = new Uint8Array(width * height * 4);
-      ctx.readPixels(
-        0, 
-        0, 
-        width, 
-        height, 
-        ctx.RGBA, 
-        ctx.UNSIGNED_BYTE, 
-        pixels);
+    pixels = new Uint8Array(width * height * 4);
+    ctx.readPixels(
+      0, 
+      0, 
+      width, 
+      height, 
+      ctx.RGBA, 
+      ctx.UNSIGNED_BYTE, 
+      pixels);
 
-      // restore crosshairs
-      this.instance.setCrosshairColor(old_crosshaircolor);
-      this.instance.opts.crosshairWidth = old_crosshairwidth;
+    // restore crosshairs
+    this.instance.setCrosshairColor(old_crosshaircolor);
+    this.instance.opts.crosshairWidth = old_crosshairwidth;
+
+    if (!Util.is_defined(from_canvas)) {
 
       // convert rgba pixels to grayscale
       pixels = Util.rgba_to_grayscale(pixels);
 
+      console.log('to grayscale')
 
     } else {
 
@@ -78,6 +77,7 @@ export class NiiVue extends Framework {
 
     }
 
+
     return {'data':pixels, 'width':width, 'height':height};
 
   }
@@ -85,9 +85,9 @@ export class NiiVue extends Framework {
   /**
    * Sets the NiiVue.js image.
    * 
-   * If rgba==true, we do *not* convert to RGBA before setting on canvas.
+   * If is_rgba==true, we do *not* convert to RGBA before setting on canvas.
    **/
-  set_image(new_pixels, rgba, noflip) {
+  set_image(new_pixels, is_rgba, no_flip) {
 
     // TODO this is hacky since we dont work with the real volume yet
     // create new canvas
@@ -106,27 +106,26 @@ export class NiiVue extends Framework {
 
     let new_pixels_rgba = null;
 
-    if (typeof rgba == 'undefined') {
+    if (Util.is_defined(is_rgba)) {
 
-      new_pixels_rgba = Util.grayscale_to_rgba(new_pixels);
+      new_pixels_rgba = new_pixels;
+      console.log('RAW', new_pixels_rgba)
 
     } else {
 
-      new_pixels_rgba = new_pixels;
+      new_pixels_rgba = Util.grayscale_to_rgba(new_pixels);
+
 
     }
 
     let new_pixels_clamped = new Uint8ClampedArray(new_pixels_rgba);
 
-
-    console.log(new_pixels_clamped, newcanvas.width, newcanvas.height);
     let new_image_data = new ImageData(new_pixels_clamped, newcanvas.width, newcanvas.height);
     
 
     ctx.putImageData(new_image_data, 0, 0);
 
-    if (typeof noflip == 'undefined') {
-      console.log('flipping');
+    if (!Util.is_defined(no_flip)) {
       // some flipping action
       ctx.save();
       ctx.scale(1, -1);
@@ -153,15 +152,11 @@ export class NiiVue extends Framework {
     // merge image + mask
     // and then call set_image with that information
 
-    let image = this.get_image(true);
+    let image = this.get_image();
 
-    let image_rgba = Util.grayscale_to_rgba(image.data);
+    let masked_image = Util.harden_mask(image.data, new_mask);
 
-    let masked_image = Util.harden_mask(image_rgba, new_mask);
-
-    console.log(masked_image);
-
-    this.set_image(masked_image, true, false);
+    this.set_image(masked_image, true);
 
 
   }
