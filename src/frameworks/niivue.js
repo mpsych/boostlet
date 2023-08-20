@@ -187,22 +187,36 @@ export class NiiVue extends Framework {
 
     canvas.addEventListener('mousedown', function (e) {
       this.isMouseDown = true;
-      this.x1=e.x;
-      this.y1=e.y;
+
+      var rect = e.currentTarget.getBoundingClientRect(),
+      offsetX = e.clientX - rect.left,
+      offsetY = e.clientY - rect.top;
+
+      this.x1 = offsetX;
+      this.y1 = offsetY;
     }.bind(this));
 
     canvas.addEventListener('mousemove', function (e) {
       if (this.isMouseDown) {
-        this.x2 = e.x;
-        this.y2 = e.y;
+
+        var rect = e.currentTarget.getBoundingClientRect(),
+        offsetX = e.clientX - rect.left,
+        offsetY = e.clientY - rect.top;
+
+        this.x2 = offsetX;
+        this.y2 = offsetY;
         this.instance.drawSelectionBox([this.x1, this.y1, this.x2-this.x1, this.y2-this.y1]);
       }
     }.bind(this));
 
 
     canvas.addEventListener('mouseup', function (e) {
-      this.x2 = e.x;
-      this.y2 = e.y;
+      var rect = e.currentTarget.getBoundingClientRect(),
+      offsetX = e.clientX - rect.left,
+      offsetY = e.clientY - rect.top;
+      
+      this.x2 = offsetX;
+      this.y2 = offsetY;
       this.isMouseDown = false;
 
       let topleft = {x: this.x1, y: this.y1};
