@@ -32,6 +32,9 @@ export class Util {
 
     // introducing hack to make it work for openneuro
     window.Object.defineProperty(window.Object.prototype, 'global', {
+      get( ){
+        return window;
+      },
       set(newGlobal) {
         globalThis = newGlobal;
       }
