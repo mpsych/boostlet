@@ -133,14 +133,27 @@
     window.onload = function() {
 
 
-        var baseurl = 'https://raw.githubusercontent.com/mpsych/boostlet/main/examples/';
         var examples = ['sobel.js', 'segmentanything.js', 'plotly.js'];
+
+        var baseurl = 'https://raw.githubusercontent.com/mpsych/boostlet/main/examples/';
 
         for (e in examples) {
 
             var current_example = examples[e];
 
             setup_boostlet_button(current_example, baseurl+current_example);
+
+        }
+
+        var codeurl = 'https://github.com/mpsych/boostlet/blob/main/examples/';
+
+        for (e in examples) {
+
+            var current_example = examples[e];
+
+            var codelink = document.getElementById(current_example+'-code');
+
+            codelink.href = codeurl+current_example;
 
         }
 
@@ -160,9 +173,9 @@
       <!-- gfx from https://fontmeme.com/comic-fonts/ -->
       <img src='gfx/1.png' class='imgtext'>
       <div class="buttons">
-        <div><a href='' id='sobel.js'><button class="button">Sobel Filter</button></a><br><div style='margin:2px'><img src='gfx/badge.svg'></div></div>
-        <div><a href='' id='segmentanything.js'><button id='segmentanything.js' class="button">Segment Anything</button></a><br><div style='margin:2px'><img src='gfx/badge.svg'></div></div>
-        <div><a href='' id='plotly.js'><button id='plotly.js' class="button">Plotly Histogram</button></a><br><div style='margin:2px'><img src='gfx/badge.svg'></div></div>
+        <div><a href='' id='sobel.js'><button class="button">Sobel Filter</button></a><br><div style='margin:2px'><a href='' id='sobel.js-code'><img src='gfx/badge.svg'></a></div></div>
+        <div><a href='' id='segmentanything.js'><button id='segmentanything.js' class="button">Segment Anything</button></a><br><div style='margin:2px'><a href='' id='segmentanything.js-code'><img src='gfx/badge.svg'></a></div></div>
+        <div><a href='' id='plotly.js'><button id='plotly.js' class="button">Plotly Histogram</button></a><br><div style='margin:2px'><a href='' id='plotly.js-code'><img src='gfx/badge.svg'></a></div></div>
       </div>
       <img src='gfx/2.png' class='imgtext'>
       <div class="websites">
