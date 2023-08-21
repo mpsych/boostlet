@@ -1,4 +1,4 @@
-const script = document.createElement("script");
+script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://mpsych.github.io/boostlet/dist/boostlet.min.js";
 script.onload = run;
