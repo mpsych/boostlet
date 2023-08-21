@@ -84,6 +84,69 @@
       width: 90;
     }
   </style>
+  <script type="text/javascript">
+
+    // https://raw.githubusercontent.com/mpsych/boostlet/main/examples/sobel.js
+    //load_boostlet("https://raw.githubusercontent.com/mpsych/boostlet/main/examples/sobel.js", function(e) {compile_boostlet('sobel',e)})
+
+
+    function load_boostlet(url, callback) {
+
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", url);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            // request done
+            callback( xhr.response );
+
+            return;
+
+          }
+        }
+
+        xhr.send(null)
+    }
+
+
+    // FROM https://caiorss.github.io/bookmarklet-maker/
+    function compile_boostlet (code){
+
+        var output = "javascript:" +  encodeURIComponent("(function(){" + code.trim() +  "})();");
+
+        return output;
+
+    }
+
+    function setup_boostlet_button(id, url) {
+
+        var link = document.getElementById(id);
+
+        load_boostlet(url, function(code) {
+
+            output = compile_boostlet(code);
+            link.href = output;
+
+        });
+
+    } 
+
+    window.onload = function() {
+
+
+        var baseurl = 'https://raw.githubusercontent.com/mpsych/boostlet/main/examples/';
+        var examples = ['sobel.js', 'segmentanything.js', 'plotly.js'];
+
+        for (e in examples) {
+
+            var current_example = examples[e];
+
+            setup_boostlet_button(current_example, baseurl+current_example);
+
+        }
+
+    }
+
+  </script>
 </head>
 <body>
   <header>
@@ -97,15 +160,15 @@
       <!-- gfx from https://fontmeme.com/comic-fonts/ -->
       <img src='_gfx/1.png' class='imgtext'>
       <div class="buttons">
-        <div><button class="button">Sobel Filter</button><br><div style='margin:2px'><img src='_gfx/badge.svg'></div></div>
-        <div><button class="button">Segment Anything</button><br><div style='margin:2px'><img src='_gfx/badge.svg'></div></div>
-        <div><button class="button">Plotly Histogram</button><br><div style='margin:2px'><img src='_gfx/badge.svg'></div></div>
+        <div><a href='' id='sobel.js'><button class="button">Sobel Filter</button></a><br><div style='margin:2px'><img src='_gfx/badge.svg'></div></div>
+        <div><a href='' id='segmentanything.js'><button id='segmentanything.js' class="button">Segment Anything</button></a><br><div style='margin:2px'><img src='_gfx/badge.svg'></div></div>
+        <div><a href='' id='plotly.js'><button id='plotly.js' class="button">Plotly Histogram</button></a><br><div style='margin:2px'><img src='_gfx/badge.svg'></div></div>
       </div>
       <img src='_gfx/2.png' class='imgtext'>
       <div class="websites">
         <a href="https://viewer.imaging.datacommons.cancer.gov/viewer/1.3.6.1.4.1.14519.5.2.1.6279.6001.224985459390356936417021464571?seriesInstanceUID=1.2.276.0.7230010.3.1.3.0.57823.1553343864.578877,1.3.6.1.4.1.14519.5.2.1.6279.6001.273525289046256012743471155680" target="_blank"><img src="_gfx/idc.png" alt="Image 1"></a>
-        <img src="_gfx/openneuro.png" alt="Image 2">
-        <img src="_gfx/cactas.png" alt="Image 3">
+        <a href="https://openneuro.org/datasets/ds004697/versions/1.0.1/file-display/sub-003:ses-1:anat:sub-003_ses-1_T1w.nii.gz" target="_blank"><img src="_gfx/openneuro.png" alt="Image 2"></a>
+        <a href="https://mpsych.github.io/CACTAS/?data=https://mpsych.github.io/DACTAS/CUS/T0.nrrd" target="_blank"><img src="_gfx/cactas.png" alt="Image 3"></a>
         <img src="_gfx/openseadragon.png" alt="Image 3">
       </div>
       <br><br>
