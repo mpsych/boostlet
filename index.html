@@ -126,9 +126,25 @@
 
     #faq {
         margin-top:20px;
+        margin-bottom: 200px;
         width: 100%;
         float: left;
 
+    }
+
+    .question {
+        cursor: pointer;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .answer {   
+        display: none;
+        margin-bottom: 20px;
+    }
+
+    .answer.visible {
+        display: block;
     }
 
   </style>
@@ -207,6 +223,12 @@
 
     }
 
+    function toggleAnswer(index) {
+        const answer = document.getElementById(`answer${index}`);
+        answer.classList.toggle('visible');
+    }
+
+
   </script>
 </head>
 <body>
@@ -274,11 +296,16 @@
       <div id='faq'>
       <img src='gfx/faq.png' style='width:100px'><br>
       <ol>
-        <li>Which visualization frameworks are supported?</li>
-        <li>What can BOOSTLETs really do?</li>
-        <li>Do the algorithms work on the real data?</li>
-        <li>How can I write my own BOOSTLET?</li>
-        <li>How can I contribute to BOOSTLET development?</li>
+        <li class="question" onclick="toggleAnswer(1)">Which visualization frameworks are supported?</li>
+        <li class="answer" id="answer1">Currently <a href='https://cornerstonejs.org' target='_blank'>Cornerstone2D.js</a> and <a href='https://github.com/niivue/niivue' target='_blank'>NiiVue.js</a>. Others like <a href='https://cornerstonejs.org' target='_blank'>openseadragon.js, <a href='https://slicedrop.com' target='_blank'>slicedrop.com</a>, <a href='https://rii-mango.github.io/Papaya/' target='_blank'>Papaya</a> are in the works!</li>
+        <li class="question" onclick="toggleAnswer(2)">What can BOOSTLETs really do?</li>
+        <li class="answer" id="answer2">Any processing with any library is possible! The examples above use plotly.js or ONNX.js. BOOSTLETs provide methods that allow data access and interaction across different frameworks.</li>
+        <li class="question" onclick="toggleAnswer(3)">Do the algorithms work on the real data?</li>
+        <li class="answer" id="answer3">If the visualization framework supports it, we access the real data. If not, we fall back to canvas imagedata but we are working with the developers of the frameworks to fix that :)</li>
+        <li class="question" onclick="toggleAnswer(4)">How can I write my own BOOSTLET?</li>
+        <li class="answer" id="answer4">Check out the code for the examples above - there is always the top block that imports boostlet.min.js and then a run method for the processing. It is pretty straight forward (especially the <a href="https://github.com/mpsych/boostlet/blob/main/examples/sobel.js" target="_blank">sobel.js</a> and <a href="https://github.com/mpsych/boostlet/blob/main/examples/plotly.js" target="_blank">plotly.js</a> examples) and any library or processing is possible.</li>
+        <li class="question" onclick="toggleAnswer(5)">How can I contribute to BOOSTLET development?</li>
+        <li class="answer" id="answer5">Fork the <a href="https://github.com/mpsych/boostlet/" target="_blank">repo</a> :) We use parcel.js as the build system. PRs are very welcome :)</li>
       </ol>
       </div>
     </div>
