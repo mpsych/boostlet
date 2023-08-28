@@ -16,8 +16,8 @@ export class OpenSeaDragon extends Framework {
         let canvas = viewer.canvas.children[0];
         let ctx = canvas.getContext("2d");
 
-        image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        rgba_image = Util.rgba_to_grayscale(image.data);
+        let image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let rgba_image = Util.rgba_to_grayscale(image.data);
 
         return {'data':rgba_image, 'width':image.width, 'height':imgae.height};
 
@@ -25,7 +25,7 @@ export class OpenSeaDragon extends Framework {
 
     set_image(new_pixels) {
 
-        new_image = new ImageData(new Uint8ClampedArray(grayscale_to_rgba(new_pixels)), image.width, image.height);
+        let new_image = new ImageData(new Uint8ClampedArray(grayscale_to_rgba(new_pixels)), image.width, image.height);
 
         ctx.putImageData(new_image, 0, 0);
 
