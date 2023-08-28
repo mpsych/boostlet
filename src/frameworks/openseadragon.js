@@ -25,6 +25,8 @@ export class OpenSeaDragon extends Framework {
 
     set_image(new_pixels) {
 
+        let canvas = viewer.canvas.children[0];
+        let ctx = canvas.getContext("2d");
         let new_image = new ImageData(new Uint8ClampedArray(Util.grayscale_to_rgba(new_pixels)), image.width, image.height);
 
         ctx.putImageData(new_image, 0, 0);
