@@ -1,4 +1,3 @@
-alert("inside plotly min")
 script = document.createElement("script");
 script.type = "text/javascript";
 // script.src = "https://boostlet.org/dist/boostlet.min.js";
