@@ -1,8 +1,8 @@
 script = document.createElement("script");
 script.type = "text/javascript";
 // script.src = "https://boostlet.org/dist/boostlet.min.js";
-script.src = "https://shrutivarade.github.io/boostlet/dist/boostlet.min.js";
-// script.src = "http://localhost:8000/dist/boostlet.min.js";
+// script.src = "https://shrutivarade.github.io/boostlet/dist/boostlet.min.js";
+script.src = "http://localhost:8000/dist/boostlet.min.js";
 script.onload = run;
 document.head.appendChild(script);
 eval(script);
@@ -12,6 +12,7 @@ eval(script);
 
 function run() {
   
+  alert("running locally")
   // detect visualization framework
   Boostlet.init();
 
@@ -53,6 +54,8 @@ async function segment_box(topleft, bottomright) {
   uint8arr = Uint8Array.from(atob(embedding[0]), (c) => c.charCodeAt(0));
   embedding = new ort.Tensor("float32", new Float32Array(uint8arr.buffer), [1, 256, 64, 64]);
   input['low_res_embedding'] = embedding;
+
+  console.log(embedding);
 
   let x1 = topleft.x;
   let y1 = topleft.y;
