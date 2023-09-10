@@ -12,7 +12,6 @@ eval(script);
 
 function run() {
   
-  alert("running locally")
   // detect visualization framework
   Boostlet.init();
 
