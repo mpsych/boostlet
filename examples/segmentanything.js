@@ -81,9 +81,7 @@ async function segment_box(topleft, bottomright) {
 
   }).catch(err => {
 
-    alert("if error")
     console.error(err);
-    alert(err)
 
   });
 
