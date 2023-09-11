@@ -28,6 +28,7 @@ function run() {
 
 function setup_segment_anything() {
 
+
   url = 'https://model-zoo.metademolab.com/predictions/segment_everything_box_model';
   image = Boostlet.get_image(true); // grab image from canvas
   pixels = image.data;
@@ -80,7 +81,9 @@ async function segment_box(topleft, bottomright) {
 
   }).catch(err => {
 
+    alert("if error")
     console.error(err);
+    alert(err)
 
   });
 
