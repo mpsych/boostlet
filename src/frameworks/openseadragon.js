@@ -85,7 +85,11 @@ export class OpenSeaDragon extends Framework {
 
         let masked_image = Util.harden_mask(pixels, new_mask);
 
+        console.log(masked_image);
+
         let masked_image_as_imagedata = new ImageData(masked_image, width, height);
+
+        console.log(masked_image_as_imagedata);
 
         ctx.putImageData(masked_image_as_imagedata, 0, 0);
 
@@ -111,17 +115,26 @@ export class OpenSeaDragon extends Framework {
           y2 = event.clientY;
           console.log(`Second click: (X2: ${x2}, Y2: ${y2})`);
           isFirstClick = true;
-        //   callback(embedding, height, width, x1, y1, x2, y2);
 
             let topleft = {x: this.x1, y: this.y1};
             let bottomright = {x: this.x2, y: this.y2};
 
             callback(topleft, bottomright);
         }
+
+        // let topleft = {x: 529, y: 480};
+        // let bottomright = {x: 667, y: 588};
+        // callback(topleft, bottomright);
+
       }
     
+      
       // Add a click event listener to the document
       document.addEventListener("click", handleClick);
+
+    // let topleft = {x: this.x1, y: this.y1};
+    // let bottomright = {x: this.x2, y: this.y2};
+    // callback(topleft, bottomright);
 
     }
 
