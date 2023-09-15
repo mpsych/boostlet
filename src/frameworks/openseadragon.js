@@ -87,9 +87,7 @@ export class OpenSeaDragon extends Framework {
 
         let masked_image_as_imagedata = new ImageData(masked_image, width, height);
 
-        alert("before ctx")
         ctx.putImageData(masked_image_as_imagedata, 0, 0);
-        alert(masked_image_as_imagedata)
 
 
     }
