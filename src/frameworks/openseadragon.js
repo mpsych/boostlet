@@ -30,12 +30,12 @@ export class OpenSeaDragon extends Framework {
         let ctx = canvas.getContext("2d");
 
         let image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        // let rgba_image = Util.rgba_to_grayscale(image.data);
-        let pixels = image.data;
+        let rgba_image = Util.rgba_to_grayscale(image.data);
+        // let pixels = image.data;
 
 
-        // return {'data':rgba_image, 'width':image.width, 'height':image.height};
-        return {'data':pixels, 'width':image.width, 'height':image.height};
+        return {'data':rgba_image, 'width':image.width, 'height':image.height};
+        // return {'data':pixels, 'width':image.width, 'height':image.height};
 
     }
 
