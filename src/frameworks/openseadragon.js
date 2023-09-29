@@ -98,7 +98,7 @@ export class OpenSeaDragon extends Framework {
 
     select_box(callback) {
 
-        alert("Click on top left and bottom rght coordinated of the desired selection box.")
+        // alert("Click on top left and bottom rght coordinated of the desired selection box.")
       let isFirstClick = true;
       let x1, y1, x2, y2;
     
