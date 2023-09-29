@@ -98,6 +98,7 @@ export class OpenSeaDragon extends Framework {
 
     select_box(callback) {
 
+        alert("Click on top left and bottom rght coordinated of the desired selection box.")
       let isFirstClick = true;
       let x1, y1, x2, y2;
     
@@ -116,8 +117,8 @@ export class OpenSeaDragon extends Framework {
           console.log(`Second click: (X2: ${x2}, Y2: ${y2})`);
           isFirstClick = true;
 
-            let topleft = {x: this.x1, y: this.y1};
-            let bottomright = {x: this.x2, y: this.y2};
+            let topleft = {x: x1, y: y1};
+            let bottomright = {x: x2, y: y2};
 
             callback(topleft, bottomright);
         }
@@ -132,9 +133,6 @@ export class OpenSeaDragon extends Framework {
       // Add a click event listener to the document
       document.addEventListener("click", handleClick);
 
-    // let topleft = {x: this.x1, y: this.y1};
-    // let bottomright = {x: this.x2, y: this.y2};
-    // callback(topleft, bottomright);
 
     }
 
