@@ -93,7 +93,6 @@ export class OpenSeaDragon extends Framework {
 
         ctx.putImageData(masked_image_as_imagedata, 0, 0);
 
-
     }
 
     select_box(callback) {
