@@ -1,6 +1,7 @@
 import {Framework} from './framework.js';
 import {Cornerstone2D} from './frameworks/cornerstone2d.js';
 import {NiiVue} from './frameworks/niivue.js';
+import { OpenSeaDragon } from './frameworks/openseadragon.js';
 
 export class Util {
   
@@ -20,6 +21,10 @@ export class Util {
 
       framework = new Cornerstone2D(window.cornerstone);
 
+    } else if (Util.is_defined(window.OpenSeadragon)) {
+
+      framework = new OpenSeaDragon(window.OpenSeadragon);
+      
     }
 
     // TODO: fallback to general canvas or webgl framework
