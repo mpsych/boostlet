@@ -36,7 +36,7 @@
 
     .button {
       background-color: white;
-      color: black
+      color: black;
       border: 2px solid black;
       padding: 10px 20px;
       border-radius: 10px;
@@ -203,7 +203,10 @@
 
         var examples = ['sobel.js', 'segmentanything.js', 'plotly.js'];
 
-        var baseurl = 'https://raw.githubusercontent.com/mpsych/boostlet/main/examples/';
+        // var baseurl = 'https://raw.githubusercontent.com/mpsych/boostlet/main/examples/';
+        var baseurl = 'https://raw.githubusercontent.com/shrutivarade/boostlet/main/examples/';
+        // var baseurl = 'http://localhost:8000/examples/';
+        
 
         for (e in examples) {
 
@@ -213,7 +216,8 @@
 
         }
 
-        var codeurl = 'https://github.com/mpsych/boostlet/blob/main/examples/';
+        // var codeurl = 'https://github.com/mpsych/boostlet/blob/main/examples/';
+        var codeurl = 'https://github.com/shrutivarade/boostlet/blob/main/examples/';
 
         for (e in examples) {
 
@@ -227,6 +231,8 @@
 
     }
 
+
+    
     function toggleAnswer(index) {
         const answer = document.getElementById(`answer${index}`);
         answer.classList.toggle('visible');
@@ -285,7 +291,7 @@
         
 
         <div class="image-container">
-        <!-- <a href="https://haehn.github.io/axo/web/viewer.html?W255B" target="_blank"> -->
+        <a href="https://haehn.github.io/axo/web/viewer.html?W255B" target="_blank">
             <img src="gfx/openseadragon.png" alt="Axoweb">
                 <div class='overlay'>
                     <span class='sitename'>AXOweb</span>
