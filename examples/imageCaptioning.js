@@ -7,16 +7,19 @@ eval(script);
 
 async function run() {
     Boostlet.init();
-  
+    
+    console.log("Started")
     (async() => {
         await request()
     })
+    console.log("Finished")
   }
 
-const request = async function() {
+async function request() {
         
     const API_url = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
     const API_TOKEN = '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'
+    
     const data = Boostlet.get_image();
   
     try {
