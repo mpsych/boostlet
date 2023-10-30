@@ -16,13 +16,19 @@ async function run() {
     console.log("Started")
     
 
-    const data = Boostlet.get_image();
+    image = Boostlet.get_image(true); // grab image from canvas
+    pixels = image.data;
+    width = image.width;
+    height = image.height;
+    png_image = Boostlet.convert_to_png(pixels, width, height);
 
     const response = await fetch(API_url, {
       headers: { Authorization: `Bearer ${API_TOKEN}` },
       method: "POST",
-      body: data,
+      body: png_image,
     });
+
+    console.log("Fetched data")
 
     const requestdata = await response.json();
     console.log(requestdata)
