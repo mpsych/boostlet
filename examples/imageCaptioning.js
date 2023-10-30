@@ -15,23 +15,29 @@ async function run() {
     
     console.log("Started")
     
-
-    image = Boostlet.get_image(true); // grab image from canvas
-    pixels = image.data;
-    width = image.width;
-    height = image.height;
-    png_image = Boostlet.convert_to_png(pixels, width, height);
-
-    const response = await fetch(API_url, {
-      headers: { Authorization: `Bearer ${API_TOKEN}` },
-      method: "POST",
-      body: png_image,
-    });
-
-    console.log("Fetched data")
-
-    const requestdata = await response.json();
-    console.log(requestdata)
+    // Call request function and wait for it to finish
+    const requestData = await request();
+    
+    console.log(requestData);
 
     console.log("finished")
   }
+
+async function request() {
+  image = Boostlet.get_image(true); // grab image from canvas
+  pixels = image.data;
+  width = image.width;
+  height = image.height;
+  png_image = Boostlet.convert_to_png(pixels, width, height);
+
+  const response = await fetch(API_url, {
+    headers: { Authorization: `Bearer ${API_TOKEN}` },
+    method: "POST",
+    body: png_image,
+  });
+
+  console.log("Fetched data")
+
+  const requestdata = await response.json();
+  return requestdata;
+}
