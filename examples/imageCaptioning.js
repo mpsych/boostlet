@@ -5,14 +5,12 @@ script.onload = run;
 document.head.appendChild(script);
 eval(script);
 
-async function run() {
+function run() {
     Boostlet.init();
     
     console.log("Started")
-    (async() => {
-        await request()
-    })
-    console.log("Finished")
+    console.log(request())
+    console.log("finished")
   }
 
 async function request() {
@@ -29,14 +27,11 @@ async function request() {
         body: data,
       });
   
-      if (!response.ok) {
-        console.error('Network response was not ok', response);
-        return;
-      }
-  
-      const resultData = await response.json();
-      console.log(resultData);
+       const data = await response.json();
+
     } catch (error) {
-      console.error('There has been a problem with your fetch operation:', error);
+
     }
+
+    return data;
 }
