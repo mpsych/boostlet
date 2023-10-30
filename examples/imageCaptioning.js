@@ -9,7 +9,8 @@ function run() {
     Boostlet.init();
     
     console.log("Started")
-    console.log(request())
+    // print the data of the function
+    console.log(request.requestdata)
     console.log("finished")
   }
 
@@ -27,11 +28,9 @@ async function request() {
         body: data,
       });
   
-       const data = await response.json();
+       const requestdata = await response.json();
 
     } catch (error) {
 
     }
-
-    return data;
 }
