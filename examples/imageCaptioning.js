@@ -1,5 +1,3 @@
-import { HfInference } from "@huggingface/inference";
-
 script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
@@ -8,18 +6,28 @@ document.head.appendChild(script);
 eval(script);
 
 
+const API_url = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
+const API_TOKEN = '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'
+
+
 function run() {
 
-  // detect visualization framework
   Boostlet.init();
 
-  image = Boostlet.get_image();
+  data = Boostlet.get_image();
 
-  const inference = new HfInference('');
+  const response = await fetch(
+        API_url,
+        {
+            headers: { Authorization: `Bearer ${API_TOKEN}` },
+            method: "POST",
+            body: data,
+        }
+    );
 
-  await inference.imageToText({
-    data: await (await fetch(image)).blob(),
-    model: 'Salesforce/blip-image-captioning-base',
-  })
+    const result = await response.json();
+
 
 }
+
+
