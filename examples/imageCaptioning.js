@@ -10,24 +10,53 @@ const API_url = "https://api-inference.huggingface.co/models/Salesforce/blip-ima
 const API_TOKEN = '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'
 
 
-function run() {
+async function run() {
+    Boostlet.init();
 
-  Boostlet.init();
+    console.log("Started")
 
-  data = Boostlet.get_image();
+    // Call request function and wait for it to finish
+    const requestData = await request();
 
-  const response = await fetch(
-        API_url,
-        {
-            headers: { Authorization: `Bearer ${API_TOKEN}` },
-            method: "POST",
-            body: data,
-        }
-    );
+    console.log(requestData);
+    displayText(requestData)
+    console.log("finished")
+  }
 
-    const result = await response.json();
+async function request() {
+  image = Boostlet.get_image(true); // grab image from canvas
+  pixels = image.data;
+  width = image.width;
+  height = image.height;
+  png_image = Boostlet.convert_to_png(pixels, width, height);
+
+  const response = await fetch(API_url, {
+    headers: { Authorization: `Bearer ${API_TOKEN}` },
+    method: "POST",
+    body: png_image,
+  });
+
+  console.log("Fetched data")
+
+  const requestdata = await response.json();
+  return requestdata;
+}
+
+function displayText(requestData){
+
+    let container = window.document.createElement('div');
+    container.id = 'ImageCaptioningDiv';
+    container.style.position = 'absolute';
+    container.style.top = '10px';
+    container.style.left = '10px';
+    container.style.zIndex = '1000';
+    container.textContent =  requestData;
+    container.onclick = function() {
+        // destroy on click
+    window.document.body.removeChild(container);
+  }
+    window.document.body.appendChild(container);
+
 
 
 }
-
-
