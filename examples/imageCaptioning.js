@@ -16,8 +16,9 @@ async function run() {
     const requestData = await request();
     console.log(requestData);
 
+    requestDataText = requestData[0]['generated_text']
     // display the image captioning text
-    displayText(requestData);
+    displayText(requestDataText);
 
   }
 
@@ -33,24 +34,31 @@ async function request() {
     method: "POST",
     body: png_image,
   });
-  
+
   return await response.json();
 
 }
 
-function displayText(requestData){
+function displayText(captionText) {
 
-    let container = window.document.createElement('div');
+    const windowContainer = window.document.createElement('div');
+    windowContainer.classList.add('window');
+
+    const container = window.document.createElement('div');
     container.id = 'ImageCaptioningDiv';
-    container.style.position = 'absolute';
-    container.style.top = '10px';
-    container.style.left = '10px';
-    container.style.zIndex = '1000';
-    container.textContent =  requestData;
-    container.onclick = function() {
+    container.style.width = '400px';
+    container.style.height = '100px';
+
+    const textElement = window.document.createElement('p');
+    textElement.textContent =  captionText;
+    textElement.style.textAlign = 'center';
+    container.appendChild(textElement);
+    windowContainer.appendChild(container);
+
+    container.onclick = function () {
         // destroy on click
-    window.document.body.removeChild(container);
-  }
+        window.document.body.removeChild(container);
+    }
     window.document.body.appendChild(container);
 
 }
