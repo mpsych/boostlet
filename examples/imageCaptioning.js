@@ -50,7 +50,7 @@ function displayText(captionText) {
   container.style.position = 'absolute';
   container.style.top = '10px';
   container.style.left = '10px';
-  container.style.zIndex = '1000';
+  container.style.zIndex = '1000000';
   container.style.backgroundColor = 'white';
 
   const textElement = window.document.createElement('p');
