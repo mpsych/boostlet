@@ -6,7 +6,7 @@ document.head.appendChild(script);
 eval(script);
 
 const API_URL = 'https://api.openai.com/v1/chat/completions';
-const API_TOKEN = ''
+const API_TOKEN = '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'
 
 async function run() {
 
