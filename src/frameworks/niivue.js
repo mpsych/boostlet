@@ -96,8 +96,8 @@ export class NiiVue extends Framework {
     let originalcanvas = this.instance.canvas;
 
     let newcanvas = window.document.createElement('canvas');
-    newcanvas.width = originalcanvas.width;
-    newcanvas.height = originalcanvas.height;
+    newcanvas.width = originalcanvas.clientWidth;
+    newcanvas.height = originalcanvas.clientHeight;
 
     // put new_pixels down
     let ctx = newcanvas.getContext('2d');
