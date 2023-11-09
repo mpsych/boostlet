@@ -139,9 +139,10 @@ export class NiiVue extends Framework {
     }
 
     // replace nv canvas with new one
-    originalcanvas.parentNode.replaceChild(newcanvas, originalcanvas);
+    // console.log('aaa',originalcanvas.clientWidth+'px');
     newcanvas.style.width = originalcanvas.clientWidth+'px';
     newcanvas.style.height = originalcanvas.clientHeight+'px';
+    originalcanvas.parentNode.replaceChild(newcanvas, originalcanvas);
 
   }
 
