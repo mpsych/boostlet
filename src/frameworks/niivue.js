@@ -140,8 +140,8 @@ export class NiiVue extends Framework {
 
     // replace nv canvas with new one
     originalcanvas.parentNode.replaceChild(newcanvas, originalcanvas);
-    newcanvas.style.width = originalcanvas.clientWidth;
-    newcanvas.style.height = originalcanvas.clientHeight;
+    newcanvas.style.width = originalcanvas.clientWidth+'px';
+    newcanvas.style.height = originalcanvas.clientHeight+'px';
 
   }
 
