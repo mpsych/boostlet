@@ -139,7 +139,7 @@ export class NiiVue extends Framework {
     }
 
     // replace nv canvas with new one
-    // console.log('aaa',originalcanvas.clientWidth+'px');
+    // originalcanvas.parentNode.replaceChild(newcanvas, originalcanvas);
     newcanvas.style.width = originalcanvas.clientWidth+'px';
     newcanvas.style.height = originalcanvas.clientHeight+'px';
     originalcanvas.parentNode.replaceChild(newcanvas, originalcanvas);
@@ -186,13 +186,13 @@ export class NiiVue extends Framework {
 
     let canvas = this.instance.canvas;
 
-
+    
     canvas.addEventListener('mousedown', function (e) {
       this.isMouseDown = true;
 
       var rect = e.currentTarget.getBoundingClientRect(),
-      offsetX = e.clientX - rect.left,
-      offsetY = e.clientY - rect.top;
+      offsetX = e.clientX * window.devicePixelRatio - rect.left * window.devicePixelRatio,
+      offsetY = e.clientY * window.devicePixelRatio - rect.top * window.devicePixelRatio;
 
       this.x1 = offsetX;
       this.y1 = offsetY;
@@ -202,8 +202,8 @@ export class NiiVue extends Framework {
       if (this.isMouseDown) {
 
         var rect = e.currentTarget.getBoundingClientRect(),
-        offsetX = e.clientX - rect.left,
-        offsetY = e.clientY - rect.top;
+        offsetX = e.clientX * window.devicePixelRatio - rect.left * window.devicePixelRatio,
+        offsetY = e.clientY * window.devicePixelRatio - rect.top * window.devicePixelRatio;
 
         this.x2 = offsetX;
         this.y2 = offsetY;
@@ -214,8 +214,8 @@ export class NiiVue extends Framework {
 
     canvas.addEventListener('mouseup', function (e) {
       var rect = e.currentTarget.getBoundingClientRect(),
-      offsetX = e.clientX - rect.left,
-      offsetY = e.clientY - rect.top;
+      offsetX = e.clientX * window.devicePixelRatio - rect.left * window.devicePixelRatio,
+      offsetY = e.clientY * window.devicePixelRatio - rect.top * window.devicePixelRatio;
       
       this.x2 = offsetX;
       this.y2 = offsetY;
