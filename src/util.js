@@ -2,6 +2,7 @@ import {Framework} from './framework.js';
 import {Cornerstone2D} from './frameworks/cornerstone2d.js';
 import {NiiVue} from './frameworks/niivue.js';
 import { OpenSeaDragon } from './frameworks/openseadragon.js';
+import { Xtk } from './frameworks/xtk.js';
 
 export class Util {
   
@@ -25,6 +26,9 @@ export class Util {
 
       framework = new OpenSeaDragon(window.OpenSeadragon);
       
+    } else if (Util.is_defined(window.volume)) {
+        
+      framework = new Xtk(window.volume);
     }
 
     // TODO: fallback to general canvas or webgl framework
