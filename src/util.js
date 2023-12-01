@@ -22,13 +22,14 @@ export class Util {
 
       framework = new Cornerstone2D(window.cornerstone);
 
+    } else if (Util.is_defined(window.volume)) {
+        
+      framework = new Xtk(window.volume);
+      
     } else if (Util.is_defined(window.OpenSeadragon)) {
 
       framework = new OpenSeaDragon(window.OpenSeadragon);
       
-    } else if (Util.is_defined(window.volume)) {
-        
-      framework = new Xtk(window.volume);
     }
 
     // TODO: fallback to general canvas or webgl framework
