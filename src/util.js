@@ -22,9 +22,9 @@ export class Util {
 
       framework = new Cornerstone2D(window.cornerstone);
 
-    } else if (Util.is_defined(window.volume)) {
+    } else if (Util.is_defined(window.r)) {
         
-      framework = new Xtk(window.volume);
+      framework = new Xtk(window.r);
       
     } else if (Util.is_defined(window.OpenSeadragon)) {
 
