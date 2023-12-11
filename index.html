@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="shortcut icon" type="image/png" href="./gfx/favicon.png">
   <title>BOOSTLET.js</title>
   <style>
     a {
@@ -17,28 +16,10 @@
     }
 
     header {
-    background: linear-gradient(135deg, #6dd5ed, #2193b0);
-    padding: 20px 0;
-    text-align: center;
-    color: white;
+      background-color: #fff;
+      padding: 20px;
     }
 
-    .header-content {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 0 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    h1 {
-        font-family: 'Roboto', sans-serif;
-        font-weight: 700;
-        font-size: 24px;
-        margin: 0;
-    }
-    
     .content {
       max-width: 800px;
       margin: 0 auto;
@@ -72,13 +53,21 @@
     .logo {
         background-color: black;
         color: white;
+        border: none;
         padding: 10px 20px;
         cursor: pointer;
         border-radius: 10px;
-        width: 150px;
+        font-family: 'Haettenschweiler', sans-serif;
+        font-weight: bolder;
+        font-size: 32px;
+        width: 240px;
         height: 60px;
     }
 
+    .logodiv {
+      font-size: 28px;
+      vertical-align: middle;
+    }
 
     img {
       max-width: 100%;
@@ -162,22 +151,6 @@
         display: block;
     }
 
-    /* Responsive adjustments */
-    @media (max-width: 600px) {
-        .header-content {
-            flex-direction: column;
-        }
-
-        h1 {
-            font-size: 20px;
-            padding-top: 10px;
-        }
-
-        .logo {
-            height: 50px;
-        }
-    }
-
   </style>
   <script type="text/javascript">
 
@@ -232,7 +205,7 @@
 
         var baseurl = 'https://raw.githubusercontent.com/mpsych/boostlet/main/examples/';
         // var baseurl = 'https://raw.githubusercontent.com/shrutivarade/boostlet/main/examples/';
-        // var baseurl = 'http://127.0.0.1:5500/boostlet-edward/examples/';
+        // var baseurl = 'http://localhost:8000/examples/';
         
 
         for (e in examples) {
@@ -267,13 +240,11 @@
 
 
   </script>
-  
 </head>
 <body>
   <header>
-    <div class="header-content">
-        <a href='https://boostlet.org/'><img src='gfx/boostlet.png' alt='Logo' class='logo'></a>
-        <h1>BOOSTLET.js - Image Processing Plugins for the Web</h1>
+    <div class="logodiv">
+      <a href=''><button class="logo">BOOSTLET.js</button></a>&nbsp;&nbsp;&nbsp;<strong>image processing plugins for the web</strong>
     </div>
   </header>
   <main>
@@ -327,28 +298,6 @@
                 <div class='overlay'>
                     <span class='sitename'>AXOweb</span>
                     <span class='tech'>openseadragon.js</span>
-
-                </div>
-        </a>
-        </div>
-
-        <div class="image-container">
-          <a href="https://gaiborjosue.github.io/API_Images/xtk.html" target="_blank">
-              <img src="gfx/xtk.png" alt="xtk">
-                  <div class='overlay'>
-                      <span class='sitename'>XTK Demo</span>
-                      <span class='tech'>xtk.js 2D Slice</span>
-  
-                  </div>
-        </a>
-        </div>
-
-        <div class="image-container">
-        <a href="https://gaiborjosue.github.io/API_Images/papaya.html" target="_blank">
-            <img src="gfx/papaya.png" alt="papaya">
-                <div class='overlay'>
-                    <span class='sitename'>Papaya Demo</span>
-                    <span class='tech'>papaya.js</span>
 
                 </div>
         </a>
