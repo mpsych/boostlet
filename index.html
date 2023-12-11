@@ -19,6 +19,21 @@
     header {
       background-color: #fff;
       padding: 20px;
+      text-align: center;
+    }
+
+    .header-content {
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+    }
+
+    h1 {
+        font-family: 'Roboto', sans-serif;
+        font-weight: 700;
+        font-size: 28px;
+        margin: 0;
     }
 
     .content {
@@ -55,13 +70,10 @@
         background-color: black;
         color: white;
         border: none;
-        padding: 10px 20px;
+        padding: 10px 30px;
         cursor: pointer;
         border-radius: 10px;
-        font-family: 'Haettenschweiler', sans-serif;
-        font-weight: bolder;
-        font-size: 32px;
-        width: 240px;
+        width: 150px;
         height: 60px;
     }
 
@@ -150,6 +162,22 @@
 
     .answer.visible {
         display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+        .header-content {
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 20px;
+            padding-top: 10px;
+        }
+
+        .logo {
+            height: 50px;
+        }
     }
 
   </style>
@@ -244,9 +272,10 @@
 </head>
 <body>
   <header>
-    <div class="logodiv">
-      <a href=''><button class="logo">BOOSTLET.js</button></a>&nbsp;&nbsp;&nbsp;<strong>image processing plugins for the web</strong>
-    </div>
+    <div class="header-content">
+      <a href='https://boostlet.org/'><img src='gfx/boostlet.png' alt='Logo' class='logo'></a>
+      &nbsp;&nbsp;&nbsp;&nbsp;<h1>image processing plugins for the web</h1>
+  </div>
   </header>
   <main>
     <div class="content">
