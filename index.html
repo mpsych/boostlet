@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" type="image/png" href="./gfx/favicon.png">
   <title>BOOSTLET.js</title>
   <style>
     a {
@@ -18,6 +19,21 @@
     header {
       background-color: #fff;
       padding: 20px;
+      text-align: center;
+    }
+
+    .header-content {
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+    }
+
+    h1 {
+        font-family: 'Roboto', sans-serif;
+        font-weight: 700;
+        font-size: 28px;
+        margin: 0;
     }
 
     .content {
@@ -54,13 +70,10 @@
         background-color: black;
         color: white;
         border: none;
-        padding: 10px 20px;
+        padding: 10px 30px;
         cursor: pointer;
         border-radius: 10px;
-        font-family: 'Haettenschweiler', sans-serif;
-        font-weight: bolder;
-        font-size: 32px;
-        width: 240px;
+        width: 150px;
         height: 60px;
     }
 
@@ -149,6 +162,22 @@
 
     .answer.visible {
         display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+        .header-content {
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 20px;
+            padding-top: 10px;
+        }
+
+        .logo {
+            height: 50px;
+        }
     }
 
   </style>
@@ -243,9 +272,10 @@
 </head>
 <body>
   <header>
-    <div class="logodiv">
-      <a href=''><button class="logo">BOOSTLET.js</button></a>&nbsp;&nbsp;&nbsp;<strong>image processing plugins for the web</strong>
-    </div>
+    <div class="header-content">
+      <a href='https://boostlet.org/'><img src='gfx/boostlet.png' alt='Logo' class='logo'></a>
+      &nbsp;&nbsp;&nbsp;&nbsp;<h1>image processing plugins for the web</h1>
+  </div>
   </header>
   <main>
     <div class="content">
@@ -298,6 +328,28 @@
                 <div class='overlay'>
                     <span class='sitename'>AXOweb</span>
                     <span class='tech'>openseadragon.js</span>
+
+                </div>
+        </a>
+        </div>
+
+        <div class="image-container">
+          <a href="https://gaiborjosue.github.io/API_Images/xtk.html" target="_blank">
+              <img src="gfx/xtk.png" alt="xtk">
+                  <div class='overlay'>
+                      <span class='sitename'>XTK Demo</span>
+                      <span class='tech'>xtk.js 2D Slice</span>
+  
+                  </div>
+        </a>
+        </div>
+
+        <div class="image-container">
+        <a href="https://gaiborjosue.github.io/API_Images/papaya.html" target="_blank">
+            <img src="gfx/papaya.png" alt="papaya">
+                <div class='overlay'>
+                    <span class='sitename'>Papaya Demo</span>
+                    <span class='tech'>papaya.js</span>
 
                 </div>
         </a>
