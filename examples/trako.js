@@ -1,6 +1,3 @@
-// load example fiber (very small and fast)
-// we need it as a NVMesh template
-nvmesh = await niivue.addMeshFromUrl({'url':'https://niivue.github.io/niivue/images/colby.trk'})
 
 TKOFILE = 'https://bostongfx.github.io/TRAKO/DATA/example.tko';
 
@@ -15,7 +12,12 @@ eval(script);
 //
 // THIS ONLY WORKS WITH NIIVUE RIGHT NOW
 //
-function run() {
+async function run() {
+  
+  // load example fiber (very small and fast)
+  // we need it as a NVMesh template
+  nvmesh = await niivue.addMeshFromUrl({'url':'https://niivue.github.io/niivue/images/colby.trk'})
+
   
   // detect visualization framework
   Boostlet.init();
