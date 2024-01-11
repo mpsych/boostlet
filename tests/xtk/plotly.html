@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>DEMO</title>
+    <style>
+      html,
+      body {
+        background-color: #000;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden !important;
+      }
+    </style>
+
+    <script src="/examples/plotly.js"></script>
+
+    <script
+      type="text/javascript"
+      src="https://get.goXTK.com/xtk_edge.js"
+    ></script>
+
+    <script type="text/javascript">
+      window.onload = function () {
+        // create a new 3d renderer
+        r = new X.renderer2D();
+        r.orientation = 'x';
+        r.init();
+       
+        // New volume
+        v = new X.volume();
+
+        v.file = "https://haehn.github.io/VIZBI/daniel.nii";
+
+        r.add(v);        
+
+        r.render();
+
+        r.onShowtime = function () {
+          setTimeout(function() {
+            if (typeof run === "function") {
+                run();
+            }
+          }, 1000);
+        };
+      };
+
+      window.TESTCOMPLETED = true;
+    </script>
+  </head>
+  <body></body>
+</html>

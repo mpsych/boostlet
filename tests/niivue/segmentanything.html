@@ -1,0 +1,94 @@
+<html>
+
+    <head>
+
+        <script type="text/javascript" src="js/niivue.umd.js"></script>
+        <script type="text/javascript" src="js/opencv.js"></script>
+
+        <script type="text/javascript" src="js/main.js"></script>
+        <script type="text/javascript" src="js/viewer.js"></script>
+        <script type="text/javascript" src="js/drawer.js"></script>
+
+        <script type="text/javascript" src="js/nouislider.min.js"></script>
+        
+        <script type="text/javascript" src="js/annotator.js"></script>
+        
+        <link rel="stylesheet" href="css/nouislider.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="/examples/segmentanything.js"></script>
+
+
+        <title>CACTAS</title>
+
+        <script>
+            function simulateDrag(startX, startY, endX, endY) {
+                // Create the mousedown event
+                const mouseDownEvent = new MouseEvent("mousedown", {
+                    clientX: startX,
+                    clientY: startY,
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                });
+
+                // Create the mousemove event
+                const mouseMoveEvent = new MouseEvent("mousemove", {
+                    clientX: endX,
+                    clientY: endY,
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                });
+
+                // Create the mouseup event
+                const mouseUpEvent = new MouseEvent("mouseup", {
+                    clientX: endX,
+                    clientY: endY,
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                });
+
+                // Get the element at start position and dispatch mousedown
+                let elementAtStart = document.elementFromPoint(startX, startY);
+                if (elementAtStart) elementAtStart.dispatchEvent(mouseDownEvent);
+
+                let elementAtEnd = document.elementFromPoint(endX, endY);
+                if (elementAtEnd) {
+                    elementAtEnd.dispatchEvent(mouseMoveEvent);
+                    elementAtEnd.dispatchEvent(mouseUpEvent);
+                }
+            }
+
+            setTimeout(function() {
+                simulateDrag(298, 534, 363, 632)
+            }, 10000)
+
+            window.TESTCOMPLETED = true;
+        </script>
+
+    </head>
+
+    <body>
+        
+        <canvas id='viewer'></canvas>
+
+        <div id='tools' class='panel'>
+            <strong>Tolerance</strong>: <span id='tolerancelabel'>30</span><br>
+          <input type='range' min='1' max='50' value='30' id='tolerance' style='margin-top:5px;margin-bottom:5px'>
+
+            <br>
+
+            <strong>Window/Level</strong>: <span id='windowlabel'></span><br>
+            <div id='wlslider' style='margin-top:5px;margin-bottom:5px'></div>
+
+        </div>
+
+        <div id='credits' class='panel'>
+            <strong><a href='https://github.com/mpsych/CACTAS/#readme' target=_blank>CACTAS v0.1b</a></strong>
+        </div>
+
+    </body>
+
+</html>
