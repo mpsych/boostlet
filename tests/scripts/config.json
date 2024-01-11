@@ -1,0 +1,41 @@
+{
+  "browser": {
+    "clientName": "chrome"
+  },
+  "viewport": {
+    "default": {
+      "height": 1200,
+      "width": 800
+    },
+    "mobile": {
+      "height": 1200,
+      "width": 800
+    },
+    "desktop": {
+      "height": 3600,
+      "width": 800
+    }
+  },
+  "env": {
+    "local": {
+      "niivue" : {
+        "sobel": "http://127.0.0.1:5501/tests/niivue/sobel.html",
+        "plotly" : "http://127.0.0.1:5501/tests/niivue/plotly.html",
+        "sam" : "http://127.0.0.1:5501/tests/niivue/segmentanything.html"
+      },
+      "osd": {
+        "sobel" : "http://127.0.0.1:5501/tests/openseadragon/sobel.html",
+        "plotly" : "http://127.0.0.1:5501/tests/openseadragon/plotly.html",
+        "sam" : "http://127.0.0.1:5501/tests/openseadragon/segmentanything.html"
+      },
+      "papaya" : {
+        "sobel" : "http://127.0.0.1:5501/tests/papaya/sobel.html",
+        "plotly" : "http://127.0.0.1:5501/tests/papaya/plotly.html"
+      },
+      "xtk" : {
+        "sobel" : "http://127.0.0.1:5501/tests/xtk/sobel.html",
+        "plotly" : "http://127.0.0.1:5501/tests/xtk/plotly.html"
+      }
+    }
+  }
+}

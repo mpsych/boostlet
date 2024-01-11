@@ -3,7 +3,21 @@
   "version": "0.0.1-alpha",
   "source": "src/index.js",
   "main": "dist/boostlet.min.js",
+  "scripts": {
+    "dev": "npx live-server --port=5501 --no-browser",
+    "test": "node --experimental-modules ./tests/scripts/index.js"
+  },
   "devDependencies": {
-    "parcel": "^2.9.3"
+    "cross-env": "^7.0.3",
+    "parcel": "^2.11.0",
+    "process": "^0.11.10"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "colors": "^1.4.0",
+    "pixelmatch": "^5.3.0",
+    "pngjs": "^7.0.0",
+    "puppeteer": "^21.7.0",
+    "signale": "^1.4.0"
   }
 }
