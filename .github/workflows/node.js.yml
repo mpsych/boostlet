@@ -28,5 +28,5 @@ jobs:
         cache: 'npm'
     - run: npm install
     - run: npx parcel build
-    - run: npm run dev
+    - run: npm run dev &
     - run: npm run test
