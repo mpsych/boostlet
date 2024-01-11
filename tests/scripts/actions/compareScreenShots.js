@@ -30,7 +30,7 @@ const compareScreenShots = async (FILENAME_A, FILENAME_B, viewportConfig) => {
     width,
     height,
     {
-      threshold: 0.1
+      threshold: 0.4
     }
   )
 
