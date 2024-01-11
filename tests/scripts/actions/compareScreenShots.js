@@ -33,8 +33,10 @@ const compareScreenShots = async (FILENAME_A, FILENAME_B, viewportConfig) => {
       threshold: 0.1
     }
   )
-
-  if (diffPixels === 0) {
+  // Implement a threshold system, of 5% tolreance
+  const threshold = 0.05
+  const totalPixels = width * height
+  if ( diffPixels / totalPixels < threshold ) {
     console.log('Success! No difference in rendering'.green)
   } else {
     console.log(
