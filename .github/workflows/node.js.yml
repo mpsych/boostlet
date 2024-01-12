@@ -41,7 +41,7 @@ jobs:
   Check-for-failure:
     needs: Test-New-Boostlet-Dist
     runs-on: ubuntu-latest
-    if: ${{ needs.Test-New-Boostlet-Dist.result == 'failure' }}
+    if: ${{ failure() }}
     steps:
       - name: Comment current pull request
         uses: alawiii521/current-pr-comment@v1.0
