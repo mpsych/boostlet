@@ -97,6 +97,7 @@ const runItAll = async (config) => {
     const summary = core.summary.addHeading('Test Results 🚀');
     summary.addTable(tableRows);
     summary.write();
+    core.exportVariable('allTestsPassed',allTestsPassed);
   } else {
     // Console output for local execution
     testResults.forEach(test => {
@@ -104,13 +105,7 @@ const runItAll = async (config) => {
       console.log(`Test for ${test.framework} - ${test.type}: ${testStatus}, Number of different Pixels: ${test.diffPixels}`);
     });
   }
-  allTestsPassed = false;
   
-  if (isGitHubActions) {
-    core.exportVariable('allTestsPassed',allTestsPassed);
-  }
-
-
   if (!allTestsPassed) {
     console.error('Some tests failed.');
   }

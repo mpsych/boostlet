@@ -30,9 +30,10 @@ jobs:
     - run: npx parcel build
     - run: npm run dev &
     - run: npm run test
-    - run: |
+    - name: Check if all tests passed
+      run: |
         if [ "$allTestsPassed" = "false" ]; then
-          echo "Some tests failed."
+          echo "Some tests failed. Check workflow summary to learn more."
           exit 1
         fi
       env:
