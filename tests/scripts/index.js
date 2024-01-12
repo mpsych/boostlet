@@ -98,7 +98,7 @@ const runItAll = async (config) => {
   if (isGitHubActions) {
     const summary = core.summary.addHeading('Test Results 🚀');
     // Add images to the summary
-    const imagesDir = path.join(__dirname, '/images/');
+/*     const imagesDir = path.join(__dirname, '/images/');
     const imageFiles = fs.readdirSync(imagesDir);
 
     imageFiles.forEach(file => {
@@ -108,8 +108,13 @@ const runItAll = async (config) => {
         const image64 = Buffer.from(image).toString('base64');
         summary.addRaw(`![Testing](data:image/png;base64,${image64})`);
       }
-    });
+    }); */
+
     summary.addTable(tableRows);
+
+    core.summary.addBreak()
+
+    core.summary.addQuote('Thanks for testing Boostlet, to download the screenshots taken in the session please see the artifact above.', 'Boostlet Team')
 
     summary.write();
     core.exportVariable('allTestsPassed',allTestsPassed);
