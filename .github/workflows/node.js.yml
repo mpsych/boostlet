@@ -50,5 +50,5 @@ jobs:
               ## :x: Test Failed :x:
               Hi there! It looks like the tests did not pass successfully. :worried:
 
-              **Please check the [Test Report]('${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}') for more details.** "
+              **Please check the ![Test Report]('${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}') for more details.** "
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
