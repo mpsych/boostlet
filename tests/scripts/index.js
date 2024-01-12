@@ -84,7 +84,7 @@ const runItAll = async (config) => {
   let allTestsPassed = true;
   let consoleContent = '';
   const tableRows = [
-    [{data: 'Framework', header: true}, {data: 'Type', header: true}, {data: 'Test Result', header: true}, {data: 'Number of Different Pixels', header: true}]
+    [{data: 'Framework', header: true}, {data: 'Type', header: true}, {data: 'Test Result (5% tolerance)', header: true}, {data: 'Number of Different Pixels (Total: 960k)', header: true}]
   ];
 
   testResults.forEach(test => {
