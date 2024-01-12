@@ -106,8 +106,9 @@ const runItAll = async (config) => {
     imageFiles.forEach(file => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
-        const image = Buffer.from(imagePath).toString('base64');
-        summary.addImage(`data:image/png;base64,${image}`, 'Screenshots taken while Testing', { width: '800', height: '1200' });
+        const image = fs.readFileSync(imagePath)
+        const image64 = Buffer.from(image).toString('base64');
+        summary.addRaw(`![Hello World](data:image/png;base64,${image64}`, true);
       }
     });
 
