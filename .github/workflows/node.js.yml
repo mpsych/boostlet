@@ -8,6 +8,11 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
 
 jobs:
   Test-New-Boostlet-Dist:
