@@ -1,6 +1,8 @@
 const signale = require('signale')
 const config = require('./config.json')
 const core = require('@actions/core');
+const fs = require('fs');
+const path = require('path');
 const { generateDateString } = require('./actions/generateDateString.js');
 const { getPageScreenshot } = require('./actions/getPageScreenshot.js');
 const { compareScreenShots } = require('./actions/compareScreenShots.js');
@@ -96,6 +98,18 @@ const runItAll = async (config) => {
   if (isGitHubActions) {
     const summary = core.summary.addHeading('Test Results 🚀');
     summary.addTable(tableRows);
+
+    // Add images to the summary
+    const imagesDir = 'tests/scripts/images';
+    const imageFiles = fs.readdirSync(imagesDir);
+
+    imageFiles.forEach(file => {
+      if (file.startsWith('Test')) {
+        const imagePath = path.join(imagesDir, file);
+        summary.addImage(imagePath, 'Screenshots taken while testing', { width: '800', height: '1200' });
+      }
+    });
+
     summary.write();
     core.exportVariable('allTestsPassed',allTestsPassed);
   } else {
