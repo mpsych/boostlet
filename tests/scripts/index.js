@@ -1,5 +1,6 @@
 const signale = require('signale')
 const config = require('./config.json')
+const core = require('@actions/core');
 const { generateDateString } = require('./actions/generateDateString.js');
 const { getPageScreenshot } = require('./actions/getPageScreenshot.js');
 const { compareScreenShots } = require('./actions/compareScreenShots.js');
@@ -81,24 +82,27 @@ const runItAll = async (config) => {
   await compareImages(dateString, 'mobile');
 
   let allTestsPassed = true;
-  let markdownContent = '### Test Results\n| Framework | Type | Test Result | Number of different Pixels |\n|-----------|------|-------------|---------------------------|\n';
   let consoleContent = '';
+  const tableRows = [
+    [{data: 'Framework', header: true}, {data: 'Type', header: true}, {data: 'Result', header: true}]
+  ];
 
   testResults.forEach(test => {
-    const testStatus = test.success ? '✅ Passed' : '❌ Failed';
+    const testStatus = test.success ? 'Pass ✅' : 'Fail ❌';
     if (!test.success) allTestsPassed = false;
-
-    if (isGitHubActions) {
-      markdownContent += `| ${test.framework} | ${test.type} | ${testStatus} | ${test.diffPixels} |\n`;
-    } else {
-      consoleContent += `Test for ${test.framework} - ${test.type}: ${testStatus}, Number of different Pixels: ${test.diffPixels}\n`;
-    }
+    tableRows.push([test.framework, test.type, testStatus]);
   });
 
   if (isGitHubActions) {
-    fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdownContent + os.EOL);
+    const summary = core.summary.addHeading('Test Results');
+    summary.addTable(tableRows);
+    summary.write();
   } else {
-    console.log(consoleContent);
+    // Console output for local execution
+    testResults.forEach(test => {
+      const testStatus = test.success ? '✅ Passed' : '❌ Failed';
+      console.log(`Test for ${test.framework} - ${test.type}: ${testStatus}`);
+    });
   }
 
   if (!allTestsPassed) {
