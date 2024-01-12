@@ -97,23 +97,19 @@ const runItAll = async (config) => {
 
   if (isGitHubActions) {
     const summary = core.summary.addHeading('Test Results 🚀');
-    summary.addTable(tableRows);
-
     // Add images to the summary
     const imagesDir = path.join(__dirname, '/images/');
     const imageFiles = fs.readdirSync(imagesDir);
-
-    core.summary.addEOL()
 
     imageFiles.forEach(file => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
         const image = fs.readFileSync(imagePath)
         const image64 = Buffer.from(image).toString('base64');
-        const markdown = `![Testing](data:image/png;base64,${image64})`
-        summary.addRaw(markdown);
+        summary.addRaw(`![Testing](data:image/png;base64,${image64})`);
       }
     });
+    summary.addTable(tableRows);
 
     summary.write();
     core.exportVariable('allTestsPassed',allTestsPassed);
