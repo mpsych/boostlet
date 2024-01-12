@@ -10,10 +10,10 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  Test-New-Boostlet-Dist:
 
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js 18.x
