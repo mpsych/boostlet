@@ -7,6 +7,8 @@ const { compareScreenShots } = require('./actions/compareScreenShots.js');
 let testImage;
 let groundTruthImage;
 
+const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
+
 const runLocalTest = async (device = 'desktop', config, dateString) => {
   const { env, viewport } = config
   await signale.success(
@@ -75,21 +77,29 @@ const compareImages = async (dateString, device) => {
 const runItAll = async (config) => {
   const dateString = await generateDateString();
   await console.log(`Generating date for ${dateString}`.green);
-  await runLocalTest('mobile', config, dateString).then(() => {
-    compareImages(dateString, 'mobile');
-  });
+  await runLocalTest('mobile', config, dateString)
+  await compareImages(dateString, 'mobile');
 
   let allTestsPassed = true;
-
-  console.log('| Framework | Type | Test Result | Number of different Pixels |');
-  console.log('|-----------|------|-------------|---------------------------|');
+  let markdownContent = '### Test Results\n| Framework | Type | Test Result | Number of different Pixels |\n|-----------|------|-------------|---------------------------|\n';
+  let consoleContent = '';
 
   testResults.forEach(test => {
     const testStatus = test.success ? '✅ Passed' : '❌ Failed';
     if (!test.success) allTestsPassed = false;
 
-    console.log(`| ${test.framework} | ${test.type} | ${testStatus} | ${test.diffPixels} |`);
+    if (isGitHubActions) {
+      markdownContent += `| ${test.framework} | ${test.type} | ${testStatus} | ${test.diffPixels} |\n`;
+    } else {
+      consoleContent += `Test for ${test.framework} - ${test.type}: ${testStatus}, Number of different Pixels: ${test.diffPixels}\n`;
+    }
   });
+
+  if (isGitHubActions) {
+    fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdownContent + os.EOL);
+  } else {
+    console.log(consoleContent);
+  }
 
   if (!allTestsPassed) {
     console.error('Some tests failed.');
