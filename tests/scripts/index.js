@@ -108,7 +108,7 @@ const runItAll = async (config) => {
         const imagePath = path.join(imagesDir, file);
         const image = fs.readFileSync(imagePath)
         const image64 = Buffer.from(image).toString('base64');
-        summary.addImage(`data:image/png;base64,${image64}`, 'SS Testing', { width: '800', height: '1200' });
+        summary.addRaw(`![Testing](data:image/png;base64,${image64})`);
       }
     });
 
