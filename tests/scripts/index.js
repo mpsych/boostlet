@@ -107,10 +107,9 @@ const runItAll = async (config) => {
 
   if (allTestsPassed) {
     if (isGitHubActions) {
-      core.notice('Some tests failed');
+      core.error('Some tests failed');
     }
     console.error('Some tests failed.');
-    process.exit(1); // Exit with error
   }
 
   // await runGroundTruthTest('mobile', config, dateString)
