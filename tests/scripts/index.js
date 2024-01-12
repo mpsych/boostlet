@@ -107,7 +107,7 @@ const runItAll = async (config) => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
         const image = Buffer.from(imagePath).toString('base64');
-        core.summary.addRaw(`![Hello World](data:image/png;base64,${image}`, true);
+        summary.addImage(`data:image/png;base64,${image}`, 'Screenshots taken while Testing', { width: '800', height: '1200' });
       }
     });
 
