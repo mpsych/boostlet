@@ -103,6 +103,8 @@ const runItAll = async (config) => {
     const imagesDir = path.join(__dirname, '/images/');
     const imageFiles = fs.readdirSync(imagesDir);
 
+    core.summary.addEOL()
+
     imageFiles.forEach(file => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
