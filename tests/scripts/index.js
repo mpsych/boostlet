@@ -105,7 +105,11 @@ const runItAll = async (config) => {
     });
   }
   allTestsPassed = false;
-  core.exportVariable(allTestsPassed);
+  
+  if (isGitHubActions) {
+    core.exportVariable(allTestsPassed);
+  }
+
 
   if (!allTestsPassed) {
     console.error('Some tests failed.');
