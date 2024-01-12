@@ -52,13 +52,22 @@ const runGroundTruthTest = async (device = 'desktop', config, dateString) => {
   await signale.success('Files are now created')
 }
 
+const testResults = [];
+
 const compareImages = async (dateString, device) => {
   const { env, viewport } = config;
   for (const [framework, types] of Object.entries(env.local)) {
     for (const type of Object.keys(types)) {
       const groundTruthImage = `GroundTruth_${framework}_${type}`;
       const testImage = `Test_${dateString}_${framework}_${type}`;
-      await compareScreenShots(testImage, groundTruthImage, viewport[device]);
+      const result = await compareScreenShots(testImage, groundTruthImage, viewport[device]);
+      
+      testResults.push({
+        framework: framework,
+        type: type,
+        success: result.success,
+        diffPixels: result.diffPixels
+      })
     }
   }
 };
@@ -69,6 +78,23 @@ const runItAll = async (config) => {
   await runLocalTest('mobile', config, dateString).then(() => {
     compareImages(dateString, 'mobile');
   });
+
+  let allTestsPassed = true;
+
+  console.log('| Framework | Type | Test Result | Number of different Pixels |');
+  console.log('|-----------|------|-------------|---------------------------|');
+
+  testResults.forEach(test => {
+    const testStatus = test.success ? '✅ Passed' : '❌ Failed';
+    if (!test.success) allTestsPassed = false;
+
+    console.log(`| ${test.framework} | ${test.type} | ${testStatus} | ${test.diffPixels} |`);
+  });
+
+  if (!allTestsPassed) {
+    console.error('Some tests failed.');
+    process.exit(1); // Exit with error
+  }
 
   // await runGroundTruthTest('mobile', config, dateString)
 }
