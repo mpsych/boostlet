@@ -37,7 +37,8 @@ const compareScreenShots = async (FILENAME_A, FILENAME_B, viewportConfig) => {
   const threshold = 0.05
   const totalPixels = width * height
   if ( diffPixels / totalPixels < threshold ) {
-    console.log('Success! No difference in rendering'.green)
+    // console.log('Success! No difference in rendering'.green)
+    signale.fatal(new Error('Unable to acquire lock'.bgRed));
   } else {
     console.log(
       `Uh-oh! Ther are ${diffPixels} different pixels in new render!`.bgRed
