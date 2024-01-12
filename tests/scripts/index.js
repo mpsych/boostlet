@@ -104,9 +104,11 @@ const runItAll = async (config) => {
     const imageFiles = fs.readdirSync(imagesDir);
 
     imageFiles.forEach(file => {
-
+      if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
-        summary.addImage(imagePath, 'Screenshots taken while testing', { width: '800', height: '1200' });
+        const image = Buffer.from(imagePath).toString('base64');
+        core.summary.addRaw(image, true);
+      }
     });
 
     summary.write();
