@@ -104,11 +104,10 @@ const runItAll = async (config) => {
       console.log(`Test for ${test.framework} - ${test.type}: ${testStatus}, Number of different Pixels: ${test.diffPixels}`);
     });
   }
+  allTestsPassed = false;
+  core.exportVariable(allTestsPassed);
 
-  if (allTestsPassed) {
-    if (isGitHubActions) {
-      core.error('Some tests failed');
-    }
+  if (!allTestsPassed) {
     console.error('Some tests failed.');
   }
 
