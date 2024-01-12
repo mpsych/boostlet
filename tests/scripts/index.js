@@ -84,28 +84,28 @@ const runItAll = async (config) => {
   let allTestsPassed = true;
   let consoleContent = '';
   const tableRows = [
-    [{data: 'Framework', header: true}, {data: 'Type', header: true}, {data: 'Result', header: true}]
+    [{data: 'Framework', header: true}, {data: 'Type', header: true}, {data: 'Test Result', header: true}, {data: 'Number of Different Pixels', header: true}]
   ];
 
   testResults.forEach(test => {
     const testStatus = test.success ? 'Pass ✅' : 'Fail ❌';
     if (!test.success) allTestsPassed = false;
-    tableRows.push([test.framework, test.type, testStatus]);
+    tableRows.push([test.framework, test.type, testStatus, test.diffPixels.toString()]);
   });
 
   if (isGitHubActions) {
-    const summary = core.summary.addHeading('Test Results');
+    const summary = core.summary.addHeading('Test Results 🚀');
     summary.addTable(tableRows);
     summary.write();
   } else {
     // Console output for local execution
     testResults.forEach(test => {
       const testStatus = test.success ? '✅ Passed' : '❌ Failed';
-      console.log(`Test for ${test.framework} - ${test.type}: ${testStatus}`);
+      console.log(`Test for ${test.framework} - ${test.type}: ${testStatus}, Number of different Pixels: ${test.diffPixels}`);
     });
   }
 
-  if (!allTestsPassed) {
+  if (allTestsPassed) {
     console.error('Some tests failed.');
     process.exit(1); // Exit with error
   }
