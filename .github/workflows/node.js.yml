@@ -37,3 +37,18 @@ jobs:
       with:
         name: Screenshots-From-Testing
         path: ./tests/scripts/images/ # or path/to/artifact
+  
+  Check-for-failure:
+    needs: Test-New-Boostlet-Dist
+    runs-on: ubuntu-latest
+    if: ${{ needs.Test-New-Boostlet-Dist.result == 'failure' }}
+    steps:
+      - name: Comment current pull request
+        uses: alawiii521/current-pr-comment@v1.0
+        with:
+          comment: "
+              ## :x: Test Failed :x:
+              Hi there! It looks like the tests did not pass successfully. :worried:
+
+              **Please check the [Test Report]('${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}') for more details.** "
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
