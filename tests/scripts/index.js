@@ -100,7 +100,7 @@ const runItAll = async (config) => {
     summary.addTable(tableRows);
 
     // Add images to the summary
-    const imagesDir = path.join(__dirname, 'tests/scripts/images');
+    const imagesDir = path.join(__dirname, '/images/');
     const imageFiles = fs.readdirSync(imagesDir);
 
     imageFiles.forEach(file => {
