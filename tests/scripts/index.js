@@ -107,7 +107,7 @@ const runItAll = async (config) => {
   allTestsPassed = false;
   
   if (isGitHubActions) {
-    core.exportVariable(allTestsPassed);
+    core.exportVariable('allTestsPassed',allTestsPassed);
   }
 
 
