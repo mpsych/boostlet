@@ -106,6 +106,10 @@ const runItAll = async (config) => {
     console.log('Configured Cloudinary')
 
     const summary = core.summary.addHeading('Test Results 🚀');
+
+    summary.addEOL();
+    summary.addHeading('Access your screenshots on Cloudinary', 2);
+
     // Add images to the summary
     const imagesDir = path.join(__dirname, '/images/');
     const imageFiles = fs.readdirSync(imagesDir);
@@ -114,7 +118,12 @@ const runItAll = async (config) => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
 
-        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true});
+        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true}).then(
+          result => {
+            summary.addEOL();
+            summary.addLink(`${file}`, `https://res.cloudinary.com/${process.env.CLOUD_NAME}/image/upload/v${result.version}/${result.public_id}.png`)
+            }
+          )
 
         console.log(`Sent ${file} to Claudinary 🚀`)
 
