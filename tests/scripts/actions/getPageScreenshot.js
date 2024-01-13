@@ -20,7 +20,7 @@ const getPageScreenshot = async (url, env, viewportConfig, dateString) => {
   await page
     .waitForFunction('window.TESTCOMPLETED === true')
     .then(async () => {
-      signale.success('Selector is on the screen...') // This is a fancy console.log()
+      signale.success('Boostlet processing finished...') // This is a fancy console.log()
 
       await new Promise(resolve => setTimeout(resolve, 30000));
       
@@ -29,7 +29,7 @@ const getPageScreenshot = async (url, env, viewportConfig, dateString) => {
       })
       browser.close()
     })
-    .catch(error => signale.error('Selector is not available', url))
+    .catch(error => signale.error('Boostlet is not available', url))
 }
 
 module.exports.getPageScreenshot = getPageScreenshot

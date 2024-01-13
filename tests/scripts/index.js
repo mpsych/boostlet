@@ -3,6 +3,7 @@ const config = require('./config.json')
 const core = require('@actions/core');
 const fs = require('fs');
 const path = require('path');
+var cloudinary = require('cloudinary').v2;
 const { generateDateString } = require('./actions/generateDateString.js');
 const { getPageScreenshot } = require('./actions/getPageScreenshot.js');
 const { compareScreenShots } = require('./actions/compareScreenShots.js');
@@ -11,6 +12,8 @@ let testImage;
 let groundTruthImage;
 
 const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
+
+
 
 const runLocalTest = async (device = 'desktop', config, dateString) => {
   const { env, viewport } = config
@@ -96,19 +99,32 @@ const runItAll = async (config) => {
   });
 
   if (isGitHubActions) {
+    cloudinary.config({ 
+      cloud_name: process.env.CLOUD_NAME, 
+      api_key: process.env.API_KEY, 
+      api_secret: process.env.API_SECRET,
+      secure: true
+    });
+
     const summary = core.summary.addHeading('Test Results 🚀');
     // Add images to the summary
-/*     const imagesDir = path.join(__dirname, '/images/');
+    const imagesDir = path.join(__dirname, '/images/');
     const imageFiles = fs.readdirSync(imagesDir);
 
     imageFiles.forEach(file => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
         const image = fs.readFileSync(imagePath)
-        const image64 = Buffer.from(image).toString('base64');
-        summary.addRaw(`![Testing](data:image/png;base64,${image64})`);
+
+        cloudinary.uploader
+        .upload(image)
+        .then(result=>console.log(result));
+
+
+        // const image64 = Buffer.from(image).toString('base64');
+        // summary.addRaw(`![Testing](data:image/png;base64,${image64})`);
       }
-    }); */
+    });
 
     summary.addTable(tableRows);
 
@@ -117,7 +133,12 @@ const runItAll = async (config) => {
     core.summary.addQuote('Thanks for testing Boostlet, to download the screenshots taken in the session please see the artifact above.', 'Boostlet Team')
 
     summary.write();
+
     core.exportVariable('allTestsPassed',allTestsPassed);
+
+    
+
+
   } else {
     // Console output for local execution
     testResults.forEach(test => {
