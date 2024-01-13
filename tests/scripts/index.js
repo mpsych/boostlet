@@ -114,7 +114,7 @@ const runItAll = async (config) => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
 
-        cloudinary.uploader.upload(`${imagePath}`).then(result=>console.log(result));
+        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true}).then(result=>console.log(result));
 
         console.log("Sent images to Claudinary")
 
