@@ -100,7 +100,7 @@ const runItAll = async (config) => {
       cloud_name: process.env.CLOUD_NAME, 
       api_key: process.env.API_KEY, 
       api_secret: process.env.API_SECRET,
-      secure: true
+      secure: false
     });
 
     console.log('Configured Cloudinary')
@@ -114,7 +114,7 @@ const runItAll = async (config) => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
 
-        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true})
+        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true}).then(result=>console.log(result));
 
         console.log(`Sent ${file} to Claudinary 🚀`)
 
