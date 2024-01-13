@@ -12,9 +12,6 @@ let testImage;
 let groundTruthImage;
 
 const isGitHubActions = process.env.GITHUB_ACTIONS === 'true';
-
-
-
 const runLocalTest = async (device = 'desktop', config, dateString) => {
   const { env, viewport } = config
   await signale.success(
