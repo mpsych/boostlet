@@ -103,6 +103,8 @@ const runItAll = async (config) => {
       secure: true
     });
 
+    console.log('Configured Cloudinary')
+
     const summary = core.summary.addHeading('Test Results 🚀');
     // Add images to the summary
     const imagesDir = path.join(__dirname, '/images/');
@@ -112,9 +114,9 @@ const runItAll = async (config) => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
 
-        cloudinary.uploader
-        .upload(imagePath)
-        .then(result=>console.log(result));
+        cloudinary.uploader.upload(`${imagePath}`).then(result=>console.log(result));
+
+        console.log("Sent images to Claudinary")
 
 
         // const image64 = Buffer.from(image).toString('base64');
