@@ -114,9 +114,9 @@ const runItAll = async (config) => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
 
-        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true}).then(result=>console.log(result));
+        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true})
 
-        console.log("Sent images to Claudinary")
+        console.log(`Sent ${file} to Claudinary 🚀`)
 
 
         // const image64 = Buffer.from(image).toString('base64');
@@ -128,7 +128,7 @@ const runItAll = async (config) => {
 
     core.summary.addBreak()
 
-    core.summary.addQuote('Thanks for testing Boostlet, to download the screenshots taken in the session please see the artifact above.', 'Boostlet Team')
+    core.summary.addQuote('🙂 Thanks for testing Boostlet, to download the screenshots taken in the session please see the artifact above.', '⭐ Boostlet Team')
 
     summary.write();
 

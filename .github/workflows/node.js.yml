@@ -58,7 +58,21 @@ jobs:
         with:
           comment: "
               ## :x: Test Failed :x:
-              Hi there! It looks like the tests did not pass successfully. :worried:
+              Hi there @${{ github.event.issue.user.login }}! It looks like the tests did not pass successfully. :worried:
+
+              **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.** "
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  Check-for-success:
+    needs: Test-New-Boostlet-Dist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment current pull request
+        uses: alawiii521/current-pr-comment@v1.0
+        with:
+          comment: "
+              ## :white_check_mark: Test Passed :white_check_mark:
+              Hi there @${{ github.event.issue.user.login }}! It looks like the tests passed successfully. :smiley:
 
               **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.** "
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
