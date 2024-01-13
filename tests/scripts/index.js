@@ -111,10 +111,9 @@ const runItAll = async (config) => {
     imageFiles.forEach(file => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
-        const image = fs.readFileSync(imagePath)
 
         cloudinary.uploader
-        .upload(image)
+        .upload(imagePath)
         .then(result=>console.log(result));
 
 
