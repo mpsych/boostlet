@@ -6,6 +6,11 @@ This guide provides instructions on how to test your Boostlet distributions both
 
 ## 🚂 Local Testing 
 
+Before doing anything, please ensure you have all dependencies installed:
+```bash
+  npm install
+```
+
 1. **Build Your Boostlet Distribution**
    First, build your Boostlet distribution with your changes:
    ```bash
