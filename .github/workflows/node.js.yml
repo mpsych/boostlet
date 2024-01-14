@@ -4,7 +4,7 @@
 name: Node CI for Boostlet 
 
 on:
-  pull_request_target:
+  pull_request:
     branches: [ "main" ]
     types:
       - opened
@@ -51,30 +51,43 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ failure() }}
     steps:
-      - name: Comment current pull request
-        uses: alawiii521/current-pr-comment@v1.0
-        with:
-          comment: "
-              ## :x: Test Failed :x:
-              Hi there @${{ github.event.pull_request.user.login }}! It looks like the tests did not pass successfully. :worried:
+      - name: main
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/message.md <<EOF
+          ## :x: Test Failed :x:
+          Hi there @${{ github.event.pull_request.user.login }}! It looks like the tests did not pass successfully. :worried:
 
-              **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.**<br>
+          **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.**<br>
               
-              **If you want to access the screenshots taken for testing, you can do it through the developer's Claudinary management account, or through the workflow's artifacts.** "
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          **If you want to access the screenshots taken for testing, you can do it through the developer's Claudinary management account, or through the workflow's artifacts.**
+          EOF
+
+      - name: Save PR message as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr_message
+          path: artifacts
+
 
   Check-for-success:
     needs: Test-New-Boostlet-Dist
     runs-on: ubuntu-latest
     steps:
-      - name: Comment current pull request
-        uses: alawiii521/current-pr-comment@v1.0
-        with:
-          comment: "
-              ## :white_check_mark: Test Passed :white_check_mark:
-              Hi there @${{ github.event.pull_request.user.login }}! It looks like the tests passed successfully. :smiley:
+      - name: main
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/message.md <<EOF
+          ## :white_check_mark: Test Passed :white_check_mark:
+          Hi there @${{ github.event.pull_request.user.login }}! It looks like the tests passed successfully. :smiley:
 
-              **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.**<br>
-              
-              **If you want to access the screenshots taken for testing, you can do it through the developer's Claudinary management account, or through the workflow's artifacts.** "
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.**<br>
+            
+          **If you want to access the screenshots taken for testing, you can do it through the developer's Claudinary management account, or through the workflow's artifacts.**
+          EOF
+
+      - name: Save PR message as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr_message
+          path: artifacts
