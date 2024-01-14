@@ -42,13 +42,9 @@
         PIXEL_SIZE = 4.54e-7;
 
         SCAN = 'W255B'
-        scene_count = 3;
+        scene_count = 1;
 
         document.title = SCAN;
-
-        if (SCAN == 'W408B') {
-          scene_count = 4;
-        }
 
         tileSources = [];
         for (var s =0; s< scene_count; s++) {
