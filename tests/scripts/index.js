@@ -84,7 +84,8 @@ const runItAll = async (config) => {
   await compareImages(dateString, 'mobile');
 
   let allTestsPassed = true;
-  let consoleContent = '';
+
+  
   const tableRows = [
     [{data: 'Framework', header: true}, {data: 'Type', header: true}, {data: 'Test Result (5% tolerance)', header: true}, {data: 'Number of Different Pixels (Total: 960k)', header: true}]
   ];
@@ -111,9 +112,6 @@ const runItAll = async (config) => {
 
     core.summary.addBreak()
 
-    core.summary.addHeading('Access your screenshots on Cloudinary', 2);
-
-    // Add images to the summary
     const imagesDir = path.join(__dirname, '/images/');
     const imageFiles = fs.readdirSync(imagesDir);
 
@@ -121,20 +119,14 @@ const runItAll = async (config) => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
 
-        const result= cloudinary.uploader.upload(`${imagePath}`, {use_filename: true})
+        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true})
 
-        core.summary.addRaw(`https://res.cloudinary.com/drkhirceh/image/upload/v${result.version}/${result.public_id}.png`)
-        
         console.log(`Sent ${file} to Claudinary 🚀`)
-
 
         // const image64 = Buffer.from(image).toString('base64');
         // summary.addRaw(`![Testing](data:image/png;base64,${image64})`);
       }
     });
-
-
-    core.summary.addBreak();
 
     core.summary.addQuote('🙂 Thanks for testing Boostlet, to download the screenshots taken in the session please see the artifact above.', '⭐ Boostlet Team')
 

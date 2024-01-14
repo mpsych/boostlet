@@ -60,7 +60,9 @@ jobs:
               ## :x: Test Failed :x:
               Hi there @${{ github.event.issue.user.login }}! It looks like the tests did not pass successfully. :worried:
 
-              **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.** "
+              **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.** 
+              
+              **If you want to access the screenshots taken for testing, you can do it through the developer's Claudinary management, or through the workflow's artifacts.** "
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   Check-for-success:
@@ -74,5 +76,7 @@ jobs:
               ## :white_check_mark: Test Passed :white_check_mark:
               Hi there @${{ github.event.issue.user.login }}! It looks like the tests passed successfully. :smiley:
 
-              **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.** "
+              **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.** 
+              
+              **If you want to access the screenshots taken for testing, you can do it through the developer's Claudinary management, or through the workflow's artifacts.** "
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
