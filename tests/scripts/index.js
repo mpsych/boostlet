@@ -107,8 +107,11 @@ const runItAll = async (config) => {
 
     const summary = core.summary.addHeading('Test Results 🚀');
 
-    summary.addEOL();
-    summary.addHeading('Access your screenshots on Cloudinary', 2);
+    summary.addTable(tableRows);
+
+    core.summary.addBreak()
+
+    core.summary.addHeading('Access your screenshots on Cloudinary', 2);
 
     // Add images to the summary
     const imagesDir = path.join(__dirname, '/images/');
@@ -118,12 +121,7 @@ const runItAll = async (config) => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
 
-        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true}).then(
-          result => {
-            summary.addEOL();
-            summary.addLink(`${file}`, `https://res.cloudinary.com/${process.env.CLOUD_NAME}/image/upload/v${result.version}/${result.public_id}.png`)
-            }
-          )
+        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true}).then(result => summary.addLink(`${file}`, `https://res.cloudinary.com/${process.env.CLOUD_NAME}/image/upload/v${result.version}/${result.public_id}.png`))
 
         console.log(`Sent ${file} to Claudinary 🚀`)
 
@@ -133,19 +131,14 @@ const runItAll = async (config) => {
       }
     });
 
-    summary.addTable(tableRows);
 
-    core.summary.addBreak()
+    core.summary.addBreak();
 
     core.summary.addQuote('🙂 Thanks for testing Boostlet, to download the screenshots taken in the session please see the artifact above.', '⭐ Boostlet Team')
 
     summary.write();
 
     core.exportVariable('allTestsPassed',allTestsPassed);
-
-    
-
-
   } else {
     // Console output for local execution
     testResults.forEach(test => {
