@@ -4,8 +4,6 @@
 name: Node CI for Boostlet 
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
     types:

@@ -1,7 +1,5 @@
 # Boostlet.js
 
-[![Node CI for Boostlet](https://github.com/gaiborjosue/boostlet/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/gaiborjosue/boostlet/actions/workflows/node.js.yml)
-
 ## Introduction
 Boostlet.js is an innovative framework designed to extend the capabilities of web-based biomedical image visualization libraries with powerful image processing features. It allows the seamless integration of image processing modules, known as Boostlets, across various frameworks like Cornerstone2D.js, NiiVue.js, and OpenSeaDragon.js. Boostlets are modules that can extend web-based visualization
 frameworks with extra functionality such as processing
@@ -18,7 +16,7 @@ frameworks with extra functionality such as processing
 ## Getting Started
 1. Clone the repository:
    ```bash
-   git clone git@github.com:shrutivarade/boostlet.git
+   git clone git@github.com:mpsych/boostlet.git
 2. <script src="https://raw.githubusercontent.com/mpsych/boostlet/main/dist/boostlet.min.js"></script>
 
 ## Usage
