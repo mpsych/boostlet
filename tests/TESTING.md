@@ -43,18 +43,26 @@ When a PR is created, a similar testing process is automatically triggered in Gi
 
 ### Monitoring Test Progress
 
-- You can monitor the progress of the testing under the "Actions" tab on GitHub.
+- You can monitor the progress of the testing under the "Actions" tab on GitHub.<br><br>
+![Captura de pantalla 2024-01-13 201621](https://github.com/gaiborjosue/boostlet/assets/78832141/bf3d64cc-aca6-4c29-a532-ea7cef00ae69)
+
 - Typically, the test takes about 5 to 8 minutes to complete.
 
 ### Viewing Test Results
 
-- To view the results of the testing, check the "Summary" tab on the GitHub Actions workflow run.
-- The summary includes a table with the test results for each framework. i.e
-![Summary Example]()
+- To view the results of the testing, check the "Summary" tab on the GitHub Actions workflow run.<br><br>
+![Captura de pantalla 2024-01-13 201346](https://github.com/gaiborjosue/boostlet/assets/78832141/165d5531-8ea3-4efb-93bd-4b3f366bdd12)
+
+
+- The summary includes a table with the test results for each framework. i.e <br><br>
+  ![image](https://github.com/gaiborjosue/boostlet/assets/78832141/99796b34-697e-463a-906f-a8c519feb53c)
+
 
 ### Accessing Test Screenshots
 
-- To access the screenshots from the testing, click on the "Screenshots-From-Testing" artifact link above the summary section. This will download a zip file containing all the test screenshots.
+- To access the screenshots from the testing, click on the "Screenshots-From-Testing" artifact link above the summary section. This will download a zip file containing all the test screenshots.<br><br>
+![Captura de pantalla 2024-01-13 201806](https://github.com/gaiborjosue/boostlet/assets/78832141/dd70c517-ff4f-4bb1-a09d-c701bd5ebff8)
+
 - Alternatively, Boostlet developers can view the screenshots on the Cloudinary media management dashboard.
 
 ### Automated PR Comments
