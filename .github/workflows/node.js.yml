@@ -1,0 +1,93 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Node CI for Boostlet 
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+
+jobs:
+  Test-New-Boostlet-Dist:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'npm'
+    - run: npm install
+    - run: npx parcel build
+    - run: npm run dev &
+    - run: npm run test
+      env:
+        API_KEY: ${{ secrets.API_KEY }}
+        API_SECRET: ${{ secrets.API_SECRET }}
+        CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
+
+    - name: Check if all tests passed
+      run: |
+        if [ "$allTestsPassed" = "false" ]; then
+          echo "Some tests failed. Check workflow summary to learn more."
+          exit 1
+        fi
+      env:
+          allTestsPassed: ${{ env.allTestsPassed }}
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Screenshots-From-Testing
+        path: ./tests/scripts/images/ # or path/to/artifact
+  
+  Check-for-failure:
+    needs: Test-New-Boostlet-Dist
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      - name: main
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/message.md <<EOF
+          ## :x: Test Failed :x:
+          Hi there @${{ github.event.pull_request.user.login }}! It looks like the tests did not pass successfully. :worried:
+
+          **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.**<br>
+              
+          **If you want to access the screenshots taken for testing, you can do it through the developer's Claudinary management account, or through the workflow's artifacts.**
+          EOF
+
+      - name: Save PR message as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr_message
+          path: artifacts
+
+
+  Check-for-success:
+    needs: Test-New-Boostlet-Dist
+    runs-on: ubuntu-latest
+    steps:
+      - name: main
+        run: |
+          mkdir -p artifacts
+          cat > artifacts/message.md <<EOF
+          ## :white_check_mark: Test Passed :white_check_mark:
+          Hi there @${{ github.event.pull_request.user.login }}! It looks like the tests passed successfully. :smiley:
+
+          **Please check the ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} for more details.**<br>
+            
+          **If you want to access the screenshots taken for testing, you can do it through the developer's Claudinary management account, or through the workflow's artifacts.**
+          EOF
+
+      - name: Save PR message as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr_message
+          path: artifacts
