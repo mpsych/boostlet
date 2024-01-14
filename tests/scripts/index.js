@@ -121,8 +121,10 @@ const runItAll = async (config) => {
       if (file.startsWith('Test')) {
         const imagePath = path.join(imagesDir, file);
 
-        cloudinary.uploader.upload(`${imagePath}`, {use_filename: true}).then(result=>core.summary.addRaw(`https://res.cloudinary.com/drkhirceh/image/upload/v${result.version}/${result.public_id}.png`))
+        const result= cloudinary.uploader.upload(`${imagePath}`, {use_filename: true})
 
+        core.summary.addRaw(`https://res.cloudinary.com/drkhirceh/image/upload/v${result.version}/${result.public_id}.png`)
+        
         console.log(`Sent ${file} to Claudinary 🚀`)
 
 
