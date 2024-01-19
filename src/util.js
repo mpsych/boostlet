@@ -239,5 +239,37 @@ export class Util {
     return (typeof variable != 'undefined');
 
   }
+  
+  // "Boostlet Tooltips" - This is a hint mechanism that allows to display a message for a certain amount of time (ms).
+  static hint(message, duration) {
+
+    let hint = window.document.createElement('div');
+    hint.id = 'BoostletHint';
+
+    hint.style.position = 'fixed';
+    hint.style.left = '10px';
+    hint.style.top = '10px';
+    hint.style.padding = '10px';
+    hint.style.background = '#fff';
+    hint.style.color = '#000';
+    hint.style.zIndex = '100000';
+    hint.style.border = '1px solid #007ec6';
+    hint.style.borderRadius = '5px';
+    hint.style.boxShadow = '0px 0px 20px 5px rgba(0,0,0, 0.3)';
+    hint.style.fontSize = '14px';
+    hint.style.fontWeight = 'bold';
+    hint.style.textAlign = 'center';
+
+    hint.innerHTML = message;
+    
+    window.document.body.appendChild(hint);
+
+    if (typeof duration === 'number' && duration > 0) {
+      setTimeout(function() {
+        hint.remove();
+      }, duration);
+    }
+
+  }
 
 }
