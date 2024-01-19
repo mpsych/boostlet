@@ -1,6 +1,7 @@
 script = document.createElement("script");
 script.type = "text/javascript";
-script.src = "https://boostlet.org/dist/boostlet.min.js";
+// script.src = "https://boostlet.org/dist/boostlet.min.js";
+script.src = "http://localhost:5500/dist/boostlet.min.js";
 script.onload = run;
 document.head.appendChild(script);
 eval(script);
@@ -43,27 +44,11 @@ async function request() {
 
 function displayText(captionText) {
 
-  const container = window.document.createElement('div');
-  container.id = 'ImageCaptioningDiv';
-  container.style.width = '400px';
-  container.style.height = '100px';
-  container.style.position = 'absolute';
-  container.style.top = '10px';
-  container.style.left = '10px';
-  container.style.zIndex = '1000000';
-  container.style.backgroundColor = 'white';
+  Boostlet.hint(captionText);
 
-  const textElement = window.document.createElement('p');
-  textElement.textContent =  captionText;
-  textElement.style.fontFamily = 'sans-serif';
-  textElement.style.color = 'black';
-  textElement.style.textAlign = 'center';
-  container.appendChild(textElement);
-
-  container.onclick = function () {
+  BoostletHint.onclick = function () {
     // destroy on click
-    window.document.body.removeChild(container);
+    window.document.body.removeChild(BoostletHint);
   }
-  window.document.body.appendChild(container);
 
 }
