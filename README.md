@@ -20,7 +20,7 @@ Get it right here: <a href='https://boostlet.org/dist/boostlet.min.js'>boostlet.
 
 ## Example Usage
 
-The following example runs a Sobel filter on the 
+The following example creates a Boostlet that runs a Sobel filter.
 
 ```javascript
 script = document.createElement("script");
