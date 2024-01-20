@@ -1,6 +1,6 @@
 # ⚠️ Boostlet Testing Guide ⚠️
 
-**INSERT ACTIONS BADGE HERE**
+[![Node CI for Boostlet](https://github.com/mpsych/boostlet/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/mpsych/boostlet/actions/workflows/node.js.yml)
 
 This guide provides instructions on how to test your Boostlet distributions both locally and via GitHub Actions. It is crucial for all contributors to test their changes before creating a pull request (PR) or pushing to the main branch.
 

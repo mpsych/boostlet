@@ -129,4 +129,14 @@ export class Boostlet {
 
   }
 
+  /**
+   * Displays a small div located at the top left     corner of the screen with message and will disappear after the specified time (ms).
+   * 
+   */
+  hint(message, duration) {
+
+    return Util.hint(message, duration);
+
+  }
+
 }
