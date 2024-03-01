@@ -10,7 +10,8 @@ function tryRun() {
 script = document.createElement("script");
 script.type = "text/javascript";
 // script.src = "https://boostlet.org/dist/boostlet.min.js";
-script.src = "http://localhost:5500/dist/boostlet.min.js";
+// script.src = "http://localhost:5500/dist/boostlet.min.js";
+script.src = "https://gaiborjosue.github.io/boostlet/dist/boostlet.min.js"
 script.onload = function() {
   boostletLoaded = true;
   tryRun();
