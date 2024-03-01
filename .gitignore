@@ -132,3 +132,7 @@ dist
 
 .DS_Store
 .idea/
+
+# Ignore the test images created under the tests/scripts/images
+# The images start with "Test"
+tests/scripts/images/Test*.png
