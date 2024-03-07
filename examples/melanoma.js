@@ -9,9 +9,10 @@ function tryRun() {
 
 script = document.createElement("script");
 script.type = "text/javascript";
-// script.src = "https://boostlet.org/dist/boostlet.min.js";
+
+script.src = "https://boostlet.org/dist/boostlet.min.js";
 // script.src = "http://localhost:5500/dist/boostlet.min.js";
-script.src = "https://gaiborjosue.github.io/boostlet/dist/boostlet.min.js"
+// script.src = "https://gaiborjosue.github.io/boostlet/dist/boostlet.min.js"
 script.onload = function() {
   boostletLoaded = true;
   tryRun();
@@ -35,6 +36,8 @@ async function run() {
   Boostlet.init();
 
   getImage();
+
+
 }
 
 
@@ -56,13 +59,16 @@ async function predict(file) {
     
     // Log if it is a melanoma or not, index 0 is not melanoma, index 1 is melanoma, the veredict is the highest value, the log should say the probability of the prediction
     if (prediction[0] > prediction[1]) {
-      Boostlet.hint("The image is not a melanoma with a probability of: " + prediction[0], 3000);
+      Boostlet.hint("The image is not a melanoma with a probability of: " + prediction[0]);
     } else {
-      Boostlet.hint("The image is a melanoma with a probability of: " + prediction[1], 3000);
+      Boostlet.hint("The image is a melanoma with a probability of: " + prediction[1]);
+    }
+
+    BoostletHint.onclick = function () {
+      // destroy on click
+      window.document.body.removeChild(BoostletHint);
     }
   }
-  
-
 }
 
 // Get an image from the current page
@@ -80,6 +86,8 @@ function getImage() {
   div.innerHTML = "Drop an image here!";
   div.style.zIndex = "99999";
   div.style.backgroundColor = "#fff";
+  div.style.textAlign = "center";
+  div.style.fontSize = "20px";
   
 
   document.body.appendChild(div);
@@ -95,6 +103,7 @@ function getImage() {
       dropzone.ondrop = (event) => {
         event.preventDefault();
         dropzone.style.backgroundColor = "#fff";
+
         const file = event.dataTransfer.files[0];
         if (file && file.type.startsWith("image/")) {
           predict(file);
