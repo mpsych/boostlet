@@ -4,6 +4,7 @@ import {NiiVue} from './frameworks/niivue.js';
 import { OpenSeaDragon } from './frameworks/openseadragon.js';
 import { Xtk } from './frameworks/xtk.js';
 import { Papaya } from './frameworks/papaya.js';
+import { CanvasFallback } from './frameworks/canvasFallback.js';
 
 export class Util {
   
@@ -32,10 +33,16 @@ export class Util {
       framework = new OpenSeaDragon(window.OpenSeadragon);
       
     } else if (Util.is_defined(window.papayaContainers)) {
+      
       framework = new Papaya(window.papayaContainers)
-    }
 
-    // TODO: fallback to general canvas or webgl framework
+    } else {
+      // Canvas fallback
+      
+      console.log("No framework detected, falling back to canvas rendering");
+      framework = new CanvasFallback();
+      
+    }
 
     return framework;
 
