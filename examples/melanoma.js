@@ -45,7 +45,7 @@ async function run() {
 async function predict(file) {
   // Load model
   const model = await tf.loadLayersModel(
-    "https://raw.githubusercontent.com/gaiborjosue/melanoma_detection/website/vggMeshOut/model.json"
+    "https://raw.githubusercontent.com/mpsych/melanoma/main/weights/model.json"
   );
 
   // Get the image
