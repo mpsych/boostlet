@@ -81,27 +81,77 @@ export class Cornerstone2D extends Framework {
 
   select_box(callback) {
 
-    this.cornerstonetools_instance.setToolActive('RectangleRoi', { mouseButtonMask: 1 })
+    // this.cornerstonetools_instance.setToolActive('RectangleRoi', { mouseButtonMask: 1 })
 
-    let element = this.instance.getEnabledElements()[0];
-    let canvas = element.canvas;
+    // let element = this.instance.getEnabledElements()[0];
+    // let canvas = element.canvas;
 
-    canvas.onmouseup = function() {
+    // canvas.onmouseup = function() {
 
-      let state = this.cornerstonetools_instance.globalImageIdSpecificToolStateManager.saveToolState();
+    //   let state = this.cornerstonetools_instance.globalImageIdSpecificToolStateManager.saveToolState();
 
-      let topleft = state[Object.keys(state).pop()].RectangleRoi.data[0].handles.start;
-      let bottomright = state[Object.keys(state).pop()].RectangleRoi.data[0].handles.end;
+    //   let topleft = state[Object.keys(state).pop()].RectangleRoi.data[0].handles.start;
+    //   let bottomright = state[Object.keys(state).pop()].RectangleRoi.data[0].handles.end;
 
-      let topleft_c = this.instance.pixelToCanvas(element.element, topleft);
-      let bottomright_c = this.instance.pixelToCanvas(element.element, bottomright);
+    //   let topleft_c = this.instance.pixelToCanvas(element.element, topleft);
+    //   let bottomright_c = this.instance.pixelToCanvas(element.element, bottomright);
 
-      this.cornerstonetools_instance.clearToolState(element.element, 'RectangleRoi');
-      this.instance.renderGrayscaleImage(element, true);
+    //   this.cornerstonetools_instance.clearToolState(element.element, 'RectangleRoi');
+    //   this.instance.renderGrayscaleImage(element, true);
 
-      callback(topleft_c, bottomright_c);
+    //   callback(topleft_c, bottomright_c);
 
-    }.bind(this);
+    // }.bind(this);
+
+
+    if(this.cornerstonetools_instance.RectangleRoiTool === undefined) {
+      console.log("Using Boxcraft library to handle box selection.");
+      let element = this.instance.getEnabledElements()[0];
+      let canvas = element.canvas;
+      // Disable the Wwwc tool
+      cornerstoneTools.setToolDisabled("Wwwc");
+
+      BoxCraft.createDraggableBBox(canvas, function (topleft, bottomright) {
+        callback(topleft, bottomright);
+      });
+
+      // BoxCraft.createResizableBBox(canvas, function(topleft, bottomright) {
+      //   console.log("Inside Draggable BBox",topleft, bottomright);
+      //   callback(topleft, bottomright);
+      // });
+    }
+    else{
+      console.log("Using Cornerstonetools to handle box selection.");
+      this.cornerstonetools_instance.setToolActive("RectangleRoi", {
+        mouseButtonMask: 1,
+      });
+
+      let element = this.instance.getEnabledElements()[0];
+      let canvas = element.canvas;
+
+      canvas.onmouseup = function () {
+        let state =
+          this.cornerstonetools_instance.globalImageIdSpecificToolStateManager.saveToolState();
+
+        let topleft =
+          state[Object.keys(state).pop()].RectangleRoi.data[0].handles.start;
+        let bottomright =
+          state[Object.keys(state).pop()].RectangleRoi.data[0].handles.end;
+
+        let topleft_c = this.instance.pixelToCanvas(element.element, topleft);
+        let bottomright_c = this.instance.pixelToCanvas(
+          element.element,
+          bottomright
+        );
+
+        this.cornerstonetools_instance.clearToolState(
+          element.element,
+          "RectangleRoi"
+        );
+        this.instance.renderGrayscaleImage(element, true);
+        callback(topleft_c, bottomright_c);
+      }.bind(this);
+    }
 
   }
 
