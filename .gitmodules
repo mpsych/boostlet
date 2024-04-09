@@ -1,0 +1,3 @@
+[submodule "submodule/BoxCraft"]
+	path = submodule/BoxCraft
+	url = git@github.com:shrutivarade/BoxCraft.git

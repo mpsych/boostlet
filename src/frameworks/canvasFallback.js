@@ -115,8 +115,9 @@ export class CanvasFallback extends Framework {
   select_box(callback) {
     let scriptBoxCraft = document.createElement("script");
     scriptBoxCraft.type = "text/javascript";
-    scriptBoxCraft.src = "https://shrutivarade.github.io/BoxCraft/dist/boxCraft.min.js";
+    // scriptBoxCraft.src = "https://shrutivarade.github.io/BoxCraft/dist/boxCraft.min.js";
     // scriptBoxCraft.src = "http://localhost:8888/dist/boxcraft.min.js";
+    scriptBoxCraft.src = "http://localhost:8000/submodule/BoxCraft/dist/boxcraft.min.js";
     let canvas = this.get_canvas();
     document.head.appendChild(scriptBoxCraft);
 
