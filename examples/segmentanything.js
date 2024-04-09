@@ -12,8 +12,8 @@ function tryRun() {
 let scriptBoostlet = document.createElement("script");
 scriptBoostlet.type = "text/javascript";
 // scriptBoostlet.src = "https://boostlet.org/dist/boostlet.min.js";
-// scriptBoostlet.src = "https://shrutivarade.github.io/boostlet/dist/boostlet.min.js";
-scriptBoostlet.src = "http://localhost:8000/dist/boostlet.min.js";
+scriptBoostlet.src = "https://shrutivarade.github.io/boostlet/dist/boostlet.min.js";
+// scriptBoostlet.src = "http://localhost:8000/dist/boostlet.min.js";
 scriptBoostlet.onload = function() {
   boostletLoaded = true;
   tryRun();
