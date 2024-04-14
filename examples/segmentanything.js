@@ -28,7 +28,7 @@ let scriptBoxCraft = document.createElement("script");
 scriptBoxCraft.type = "text/javascript";
 // scriptBoxCraft.src = "https://shrutivarade.github.io/BoxCraft/dist/boxCraft.min.js";
 scriptBoxCraft.src = "https://shrutivarade.github.io/boostlet/dist/boxcraft.min.js";
-// scriptBoxCraft.src = "http://localhost:8000/submodule/BoxCraft/dist/boxcraft.min.js";
+// scriptBoxCraft.src = "http://localhost:8000/dist/boxcraft.min.js";
 scriptBoxCraft.onload = function() {
   boxCraftLoaded = true;
   tryRun();
