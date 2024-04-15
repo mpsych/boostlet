@@ -9,7 +9,6 @@ export class Xtk extends Framework {
     super(instance);
     this.name = "xtk";
     this.canvasFallback = new CanvasFallback();
-
   }
 
   get_image(from_canvas) {
