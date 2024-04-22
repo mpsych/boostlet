@@ -7,8 +7,10 @@
     "dev": "npx live-server --port=5501 --no-browser",
     "test": "node --experimental-modules ./tests/scripts/index.js",
     "prebuild": "git submodule init && git submodule update",
-    "build-boxcraft": "npx parcel build submodule/BoxCraft/src/index.js --dist-dir ./dist && cp submodule/BoxCraft/dist/boxcraft.min.js ./dist/boxcraft.min.js && cp submodule/BoxCraft/dist/boxcraft.min.js.map ./dist/boxcraft.min.js.map",
-    "build": "npx parcel build --no-cache && npm run build-boxcraft"
+    "build-boxcraft": "npx parcel build submodule/BoxCraft/src/index.js --dist-dir ./dist && node operatingSystem.js",
+    "build-boostlet": "npx parcel build --no-cache",
+    "build": "npm run build-boostlet && npm run build-boxcraft"
+
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
