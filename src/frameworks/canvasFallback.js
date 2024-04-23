@@ -3,6 +3,7 @@ import { Framework } from "../framework.js";
 import { Util } from "../util.js";
 
 
+
 export class CanvasFallback extends Framework {
   constructor() {
     super();
@@ -114,8 +115,10 @@ export class CanvasFallback extends Framework {
   select_box(callback) {
     let scriptBoxCraft = document.createElement("script");
     scriptBoxCraft.type = "text/javascript";
-    scriptBoxCraft.src = "https://shrutivarade.github.io/BoxCraft/dist/boxCraft.min.js";
-    // scriptBoxCraft.src = "http://localhost:8888/dist/boxcraft.min.js";
+    scriptBoostlet.src = "https://boostlet.org/dist/boxcraft.min.js";
+    // scriptBoxCraft.src = "https://shrutivarade.github.io/BoxCraft/dist/boxCraft.min.js";
+    // scriptBoxCraft.src = "https://shrutivarade.github.io/boostlet/dist/boxcraft.min.js";
+    // scriptBoxCraft.src = "http://localhost:8000/dist/boxcraft.min.js";
     let canvas = this.get_canvas();
     document.head.appendChild(scriptBoxCraft);
 

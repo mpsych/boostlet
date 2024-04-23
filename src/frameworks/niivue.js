@@ -1,6 +1,7 @@
 import {Framework} from '../framework.js';
 
 import {Util} from '../util.js';
+import {CanvasFallback} from './canvasFallback.js';
 
 export class NiiVue extends Framework {
   
@@ -8,6 +9,7 @@ export class NiiVue extends Framework {
 
     super(instance);
     this.name = 'niivue';
+    this.canvasFallback = new CanvasFallback();
 
     this.flip_on_png = true;
 
@@ -181,52 +183,7 @@ export class NiiVue extends Framework {
   }
 
   select_box(callback) {
-
-    // TODO also hacky until official API supports this
-
-    let canvas = this.instance.canvas;
-
-    
-    canvas.addEventListener('mousedown', function (e) {
-      this.isMouseDown = true;
-
-      var rect = e.currentTarget.getBoundingClientRect(),
-      offsetX = e.clientX * window.devicePixelRatio - rect.left * window.devicePixelRatio,
-      offsetY = e.clientY * window.devicePixelRatio - rect.top * window.devicePixelRatio;
-
-      this.x1 = offsetX;
-      this.y1 = offsetY;
-    }.bind(this));
-
-    canvas.addEventListener('mousemove', function (e) {
-      if (this.isMouseDown) {
-
-        var rect = e.currentTarget.getBoundingClientRect(),
-        offsetX = e.clientX * window.devicePixelRatio - rect.left * window.devicePixelRatio,
-        offsetY = e.clientY * window.devicePixelRatio - rect.top * window.devicePixelRatio;
-
-        this.x2 = offsetX;
-        this.y2 = offsetY;
-        this.instance.drawSelectionBox([this.x1, this.y1, this.x2-this.x1, this.y2-this.y1]);
-      }
-    }.bind(this));
-
-
-    canvas.addEventListener('mouseup', function (e) {
-      var rect = e.currentTarget.getBoundingClientRect(),
-      offsetX = e.clientX * window.devicePixelRatio - rect.left * window.devicePixelRatio,
-      offsetY = e.clientY * window.devicePixelRatio - rect.top * window.devicePixelRatio;
-      
-      this.x2 = offsetX;
-      this.y2 = offsetY;
-      this.isMouseDown = false;
-
-      let topleft = {x: this.x1, y: this.y1};
-      let bottomright = {x: this.x2, y: this.y2};
-
-      callback(topleft, bottomright);
-
-    }.bind(this));
+    return this.canvasFallback.select_box(callback);
 
   }
 

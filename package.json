@@ -5,7 +5,12 @@
   "main": "dist/boostlet.min.js",
   "scripts": {
     "dev": "npx live-server --port=5501 --no-browser",
-    "test": "node --experimental-modules ./tests/scripts/index.js"
+    "test": "node --experimental-modules ./tests/scripts/index.js",
+    "prebuild": "git submodule init && git submodule update",
+    "build-boxcraft": "npx parcel build submodule/BoxCraft/src/index.js --dist-dir ./dist && node operatingSystem.js",
+    "build-boostlet": "npx parcel build --no-cache",
+    "build": "npm run build-boostlet && npm run build-boxcraft"
+
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
