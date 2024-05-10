@@ -8,104 +8,124 @@ document.head.appendChild(script);
 eval(script);
 
 async function run() {
-
-  // detect visualization framework
-  Boostlet.init();
-
-  // Dynamically load the WebLLM script
-  const webLLMScript = document.createElement("script");
-  webLLMScript.src = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.35/lib/index.min.js";
-  document.head.appendChild(webLLMScript);
-
-  webLLMScript.onload = function() {
-      // Setup the chat UI once the WebLLM is loaded
+    // detect visualization framework
+    Boostlet.init();
+  
+    // Dynamically load the WebLLM script
+    const script = document.createElement('script');
+    // It is a module script to avoid conflicts with the global scope
+    script.type = 'module';
+    script.src = 'https://raw.githubusercontent.com/mpsych/cdn/main/web-llm/index.js';
+    document.head.appendChild(script);
+  
+    // Wait for the script to load
+    script.onload = async () => {
+      // Import the module
+      const module = await import(script.src);
+      // Now you can use the exported items from the module
+      // For example, if the module exports a function called `init`, you can call it like this:
+      console.log(module);
+      window.webllm = module;
       setupChatUI();
-      initializeChat();
-  };
-}
+      populateModelSelector();
+    };
+  }
 
 function setupChatUI() {
   const style = document.createElement("style");
   style.type = 'text/css';
   style.innerHTML = `
-      .chatui {
-          display: flex;
-          position: fixed;
-          bottom: 0;
-          right: 0;
-          flex-direction: column;
-          width: 350px;
-          height: 600px;
-          border: 2px solid #ddd;
-          border-radius: 5px;
-          background-color: #1F2027;
-          z-index: 1000;
-      }
-      .chatui-select-wrapper {
-          display: flex;
-          justify-content: center;
-          background-color: #1F2027;
-          padding: 10px 0;
-      }
-      #chatui-select {
-          width: 90%;
-          background-color: #1F2027;
-          color: white;
-          border: none;
-      }
-      #chatui-select:focus {
-          outline: none;
-      }
-      .chatui-chat {
-          flex: 1;
-          overflow-y: auto;
-          padding: 10px;
-          background-color: #1F2027;
-      }
-      .chatui-inputarea {
-          display: flex;
-          padding: 10px;
-          border-top: 2px solid transparent;
-          background-color: #1F2027;
-      }
-      .chatui-input {
-          flex: 1;
-          background-color: #40414F;
-          color: white;
-          border: none;
-          border-radius: 3px;
-          padding: 10px;
-          font-size: 16px;
-      }
-      .chatui-send-btn, .chatui-reset-btn {
-          background-color: #40414F;
-          color: white;
-          border: none;
-          border-radius: 3px;
-          padding: 10px;
-          cursor: pointer;
-          margin-left: 10px;
-      }
-      .chatui-send-btn:hover, .chatui-reset-btn:hover {
-          background-color: #03a33e;
-      }
-      .msg-bubble {
-          background-color: #f0f0f0;
-          border-radius: 8px;
-          padding: 16px;
-          color: black;
-          width: calc(100% - 20px);
-          margin: 5px auto;
-          box-sizing: border-box;
-      }
-      .left-msg .msg-bubble {
-          background-color: #343541;
-          color: #ececec;
-      }
-      .right-msg .msg-bubble {
-          background-color: #444654;
-          color: #ececec;
-      }
+    .chatui {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        flex-direction: column;
+        width: 350px;
+        height: 600px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        background-color: #1F2027;
+        z-index: 1000;
+    }
+    .chatui-select-wrapper {
+        display: flex;
+        justify-content: center;
+        background-color: #1F2027;
+        padding: 10px 0;
+    }
+    #chatui-select {
+        width: 90%;
+        background-color: #1F2027;
+        color: white;
+        border: none;
+    }
+    #chatui-select:focus {
+        outline: none;
+    }
+    .chatui-chat {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: #1F2027;
+    }
+    .chatui-inputarea {
+        display: flex;
+        padding: 10px;
+        border-top: 2px solid transparent;
+        background-color: #1F2027;
+    }
+    .chatui-input {
+        flex: 1;
+        background-color: #40414F;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 10px;
+        font-size: 16px;
+    }
+    .chatui-send-btn, .chatui-reset-btn {
+        background-color: #40414F;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 10px;
+        cursor: pointer;
+        margin-left: 10px;
+    }
+    .chatui-send-btn:hover, .chatui-reset-btn:hover {
+        background-color: #03a33e;
+    }
+    .msg-bubble {
+        display: flex;
+        align-items: center;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        padding: 10px;
+        color: black;
+        width: calc(100% - 20px);
+        margin: 5px auto;
+        box-sizing: border-box;
+    }
+    .left-msg .msg-bubble {
+        background-color: #343541; /* LLM Messages */
+        color: #ececec;
+    }
+    .right-msg .msg-bubble {
+        background-color: #444654; /* User Messages */
+        color: #ececec;
+    }
+    .profile-image {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    .message-label {
+        font-size: 12px;
+        color: #ccc;
+        text-align: center;
+    }
   `;
   document.head.appendChild(style);
 
@@ -128,11 +148,49 @@ function setupChatUI() {
   `;
 }
 
+function populateModelSelector() {
+    const modelSelect = document.getElementById('chatui-select');
+    webllm.prebuiltAppConfig.model_list.forEach((model, index) => {
+        let option = new Option(model.model_id, model.model_id);
+        modelSelect.add(option);
+    });
+
+    modelSelect.addEventListener('change', function() {
+        initializeChat(this.value);
+    });
+}
+
 // Initialize the chat
-async function initializeChat() {
-  const engine = await webllm.Engine.create({modelId: "Llama-3-8B-Instruct-q4f32_1"}); // Use your model ID
-  const chatUI = new ChatUI(engine);
-  chatUI.setupEventListeners(); // Set up event listeners after initializing
+async function initializeChat(selectedModel) {
+    try {
+        const initProgressCallback = (report) => {
+            showProgress(report.text);
+        };
+        const engine = await webllm.CreateEngine(selectedModel, { initProgressCallback });
+        const chatUI = new ChatUI(engine);
+        chatUI.setupEventListeners();
+        clearProgress();
+    } catch (error) {
+        Boostlet.hint(`Error: ${error.message}`, 3000);
+    }
+}
+
+function showProgress(text) {
+    let progressBox = document.getElementById('progress-box');
+    if (!progressBox) {
+        progressBox = document.createElement('div');
+        progressBox.id = 'progress-box';
+        progressBox.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.75); color: white; padding: 20px; border-radius: 10px; z-index: 1500;';
+        document.body.appendChild(progressBox);
+    }
+    progressBox.innerText = text;
+}
+
+function clearProgress() {
+    const progressBox = document.getElementById('progress-box');
+    if (progressBox) {
+        document.body.removeChild(progressBox);
+    }
 }
 
 class ChatUI {
@@ -150,30 +208,46 @@ class ChatUI {
   }
 
   sendChatMessage() {
-      const message = this.uiInput.value.trim();
-      if (!message) return;
-      this.appendMessage('right-msg', message);
-      this.uiInput.value = '';
-      this.processChatMessage(message);
-  }
+    const message = this.uiInput.value.trim();
+    if (!message) return;
+    this.appendMessage('right-msg', message, "User");
+    this.uiInput.value = '';
+    this.processChatMessage(message);
+}
 
   resetChat() {
       this.uiChat.innerHTML = '';
   }
 
-  appendMessage(className, text) {
-      const messageElement = document.createElement('div');
-      messageElement.className = 'msg ' + className;
-      messageElement.innerHTML = `<div class="msg-bubble">${text}</div>`;
-      this.uiChat.appendChild(messageElement);
-      this.uiChat.scrollTop = this.uiChat.scrollHeight;
+  appendMessage(className, text, role) {
+    const chat = this.uiChat;
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = 'msg ' + className;
+
+    const imgSrc = (role === "User") ? "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" : "https://en.shiftdelete.net/wp-content/uploads/2023/06/chatbots-unleashed-utilizing-a-gpt-like-mlc-local-chatbot-in-macos-1.jpg";
+    const profileImg = `<img src="${imgSrc}" alt="${role}" class="profile-image">`;
+
+    messageWrapper.innerHTML = `
+        <div class="msg-bubble">
+            ${profileImg}
+            <div>
+                <div>${text}</div>
+            </div>
+        </div>
+    `;
+
+    chat.appendChild(messageWrapper);
+    chat.scrollTop = chat.scrollHeight;
   }
 
   async processChatMessage(message) {
-      // Integration with WebLLM to send and receive messages
-      const response = await this.engine.chat.completions.create({
-          messages: [{role: "user", content: message}]
-      });
-      this.appendMessage('left-msg', response.choices[0].message.content); // Handle and display response
-  }
+    try {
+        const response = await this.engine.chat.completions.create({
+            messages: [{role: "user", content: message}]
+        });
+        this.appendMessage('left-msg', response.choices[0].message.content);
+    } catch (error) {
+        Boostlet.hint(`Error: ${error.message}`, 3000);
+    }
+ }
 };
