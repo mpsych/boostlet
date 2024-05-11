@@ -158,7 +158,8 @@ function setupChatUI() {
     if (event.key === "Enter") {
       event.preventDefault(); // Prevent the default action to avoid submitting the form
       document.getElementById("chatui-send-btn").click(); // Trigger the click event on the send button
-    }
+    }    
+    event.stopPropagation();
   });
 
   Boostlet.hint("Models with “-1k” suffix signify 1024 context length, lowering ~2-3GB VRAM requirement compared to their counterparts. Feel free to start trying with those", 5000);
