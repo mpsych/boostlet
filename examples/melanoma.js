@@ -1,4 +1,3 @@
-let boostletCategory = "Machine Learning";
 let boostletLoaded = false;
 let tfscriptLoaded = false;
 
@@ -36,9 +35,9 @@ async function run() {
   // detect visualization framework
   Boostlet.init();
 
+  Boostlet.category = "Machine Learning"
+
   getImage();
-
-
 }
 
 

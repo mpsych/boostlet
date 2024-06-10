@@ -15,7 +15,6 @@ function run() {
 
   Boostlet.category = "Filters"
 
-
   image = Boostlet.get_image();
 
   kernel = [

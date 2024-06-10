@@ -1,4 +1,3 @@
-let boostletCategory = "Machine Learning";
 let boostletLoaded = false;
 let boxCraftLoaded = false;
 
@@ -43,6 +42,8 @@ function run() {
   
   // detect visualization framework
   Boostlet.init();
+
+  Boostlet.category = "Machine Learning"
 
   // load ONNX.js
   Boostlet.load_script('https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js');

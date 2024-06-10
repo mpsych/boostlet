@@ -1,4 +1,3 @@
-let boostletCategory = "LLM Models";
 script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
@@ -14,6 +13,8 @@ async function run() {
 
   // detect visualization framework
   Boostlet.init();
+
+  Boostlet.category = "LLM Models"
 
   const requestData = await request();
   console.log(requestData);
