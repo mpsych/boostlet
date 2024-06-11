@@ -14,6 +14,8 @@ async function run() {
   // detect visualization framework
   Boostlet.init();
 
+  Boostlet.category = "LLM Models"
+
   const requestData = await request();
   console.log(requestData);
 

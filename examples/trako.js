@@ -18,6 +18,8 @@ async function run() {
   // detect visualization framework
   Boostlet.init();
 
+  Boostlet.category = "Filters"
+
   // using the XTK TRAKO FILE READER
   libs = ["https://bostongfx.github.io/TRAKO/WEB/js/xtk.js",
           "https://bostongfx.github.io/TRAKO/WEB/js/draco/draco_decoder.js",

@@ -35,9 +35,9 @@ async function run() {
   // detect visualization framework
   Boostlet.init();
 
+  Boostlet.category = "Machine Learning"
+
   getImage();
-
-
 }
 
 
