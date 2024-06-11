@@ -1,4 +1,3 @@
-let boostletCategory = "Data Visualization";
 script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
@@ -11,6 +10,8 @@ function run() {
   
   // detect visualization framework
   Boostlet.init();
+
+  Boostlet.category = "Data Visualization"
 
   all_pixels = Boostlet.get_image().data;
 

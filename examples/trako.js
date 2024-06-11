@@ -1,4 +1,3 @@
-let boostletCategory = "Filters";
 script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
@@ -18,6 +17,8 @@ async function run() {
 
   // detect visualization framework
   Boostlet.init();
+
+  Boostlet.category = "Filters"
 
   // using the XTK TRAKO FILE READER
   libs = ["https://bostongfx.github.io/TRAKO/WEB/js/xtk.js",

@@ -8,6 +8,7 @@ export class Boostlet {
 
     this.framework = null;
 
+    this.category = null;
   }
 
   /**
@@ -44,6 +45,7 @@ export class Boostlet {
 
     }
 
+    
   }
 
   /**
@@ -138,5 +140,5 @@ export class Boostlet {
     return Util.hint(message, duration);
 
   }
-
+  
 }
