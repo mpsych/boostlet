@@ -11,6 +11,8 @@ function run() {
   // detect visualization framework
   Boostlet.init();
 
+  Boostlet.category = "Data Visualization"
+
   all_pixels = Boostlet.get_image().data;
 
   // load Plotly.js library and start plotting in the onload callback
