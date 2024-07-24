@@ -6,6 +6,8 @@ script.onload = run;
 document.head.appendChild(script);
 eval(script);
 
+let category = "Filter"
+
 function run() {
   
   // detect visualization framework

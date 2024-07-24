@@ -6,6 +6,7 @@ script.onload = run;
 document.head.appendChild(script);
 eval(script);
 
+let category = "Filter"
 
 function run() {
   
@@ -13,6 +14,7 @@ function run() {
   Boostlet.init();
 
   image = Boostlet.get_image();
+
 
   kernel = [
     -1, 0, 1,
