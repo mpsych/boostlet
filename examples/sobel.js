@@ -6,7 +6,7 @@ script.onload = run;
 document.head.appendChild(script);
 eval(script);
 
-let category = "Filter"
+CATEGORY = "Filter"
 
 function run() {
   
