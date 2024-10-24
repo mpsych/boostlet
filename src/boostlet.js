@@ -6,8 +6,6 @@ export class Boostlet {
 
   constructor() {
     this.framework = null;
-    this.categories = [];
-    this.examples = new Map();
   }
 
   /**
