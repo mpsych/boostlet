@@ -1,3 +1,5 @@
+CATEGORY = "Machine Learning"
+
 let boostletLoaded = false;
 let tfscriptLoaded = false;
 
