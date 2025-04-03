@@ -1,4 +1,4 @@
-CATEGORY = "Machine Learning"
+CATEGORY = "ML"
 
 let boostletLoaded = false;
 let tfscriptLoaded = false;
