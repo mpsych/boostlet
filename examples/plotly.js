@@ -1,4 +1,4 @@
-CATEGORY = "Data Visualization"
+CATEGORY = "Visualization"
 
 script = document.createElement("script");
 script.type = "text/javascript";

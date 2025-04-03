@@ -5,6 +5,7 @@ script.onload = run;
 document.head.appendChild(script);
 eval(script);
 
+CATEGORY = "Filter"
 
 function run() {
   
