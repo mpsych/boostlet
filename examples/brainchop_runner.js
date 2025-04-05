@@ -71,8 +71,8 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
 
 
       // ACTION STARTS
-      await closeAllOverlays();
-      await ensureConformed();
+      closeAllOverlays();
+      ensureConformed();
       const model = inferenceModelsList[1];
       const opts = brainChopOpts;
       // opts.rootURL should be the url without the query string
