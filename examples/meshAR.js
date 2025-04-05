@@ -96,9 +96,23 @@ function run() {
           }
         });
 
-        setTimeout(() => {
-          document.getElementById('arjs-video').style.zIndex = 1337;
+        window.__POWERBOOSTTIMER__ = setInterval(function() {
+
+          var vid = document.getElementById('arjs-video');
+          if (vid) {
+            if (vid.style.zIndex == -2) {
+              console.log('Raise the vid!');
+              vid.style.zIndex = 1337;
+              clearInterval(window.__POWERBOOSTTIMER__);
+            } else {
+              console.log('still waiting... no zStyle');
+            }
+          } else {
+            console.log('still waiting... no vid');
+          }
+
         }, 1000);
+
 
       }, 100);
 
