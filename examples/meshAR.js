@@ -97,7 +97,7 @@ function run() {
         });
 
         setTimeout(() => {
-          document.getElementsByTagName('video')[0].style.zIndex = 1337;
+          document.getElementById('arjs-video')[0].style.zIndex = 1337;
         }, 1000);
 
       }, 100);
