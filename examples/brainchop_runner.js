@@ -1,6 +1,7 @@
 /*
  * THIS IS EXCELLENT WORK FROM BRAINCHOP.ORG!!!
  */
+CATEGORY = 'Hidden';
 import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runInference }) => {
   import("https://haehn.github.io/brainchop/brainchop-parameters.js").then(({ inferenceModelsList, brainChopOpts }) => {
     import("https://haehn.github.io/brainchop/brainchop-diagnostics.js").then(({ isChrome, localSystemDetails }) => {
