@@ -46,7 +46,7 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
           const roiVolumes = await getUniqueValuesAndCounts(overlayVolume.img);
           console.log(roiVolumes);
           if (modelEntry.colormapPath) {
-            const cmap = await fetchJSON(modelEntry.colormapPath);
+            const cmap = await fetchJSON('https://haehn.github.io/brainchop/public'+modelEntry.colormapPath);
             const newLabels = await createLabeledCounts(roiVolumes, cmap["labels"]);
             console.log(newLabels);
             overlayVolume.setColormapLabel({
@@ -105,7 +105,7 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
               "items.",
             );
           }
-          
+
           return labelStrings.map((label, index) => {
             // Find the entry matching the current label index
             const entry = uniqueValuesAndCounts.find(item => item.value === index);
