@@ -68,7 +68,43 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
           overlayVolume.opacity = 0.7;
           await Boostlet.framework.instance.addVolume(overlayVolume);
         }
+        async function fetchJSON(fnm) {
+          const response = await fetch(fnm);
+          const js = await response.json();
+          return js;
+        }
+        async function getUniqueValuesAndCounts(uint8Array) {
+          // Use a Map to count occurrences
+          const countsMap = new Map();
 
+          for (let i = 0; i < uint8Array.length; i++) {
+            const value = uint8Array[i];
+            if (countsMap.has(value)) {
+              countsMap.set(value, countsMap.get(value) + 1);
+            } else {
+              countsMap.set(value, 1);
+            }
+          }
+
+          // Convert the Map to an array of objects
+          const result = Array.from(countsMap, ([value, count]) => ({
+            value,
+            count,
+          }));
+
+          return result;
+        }
+        async function createLabeledCounts(uniqueValuesAndCounts, labelStrings) {
+          if (uniqueValuesAndCounts.length !== labelStrings.length) {
+            missingLabelStatus = "Failed to Predict Labels - "
+            console.error(
+              "Mismatch in lengths: uniqueValuesAndCounts has",
+              uniqueValuesAndCounts.length,
+              "items, but labelStrings has",
+              labelStrings.length,
+              "items.",
+            );
+          }
 
 
       // ACTION STARTS
