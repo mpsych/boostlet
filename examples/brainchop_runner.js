@@ -105,7 +105,20 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
               "items.",
             );
           }
+          
+          return labelStrings.map((label, index) => {
+            // Find the entry matching the current label index
+            const entry = uniqueValuesAndCounts.find(item => item.value === index);
 
+            // If an entry is found, append the count value with 'mm3', otherwise show 'Missing'
+            const countText = entry ? `${entry.count} mm3` : "Missing";
+
+            countText === "Missing"
+            ? missingLabelStatus += `${label}, ` : null;
+
+            return `${label}   ${countText}`;
+          });
+        }
 
       // ACTION STARTS
       closeAllOverlays();
