@@ -17,9 +17,10 @@ function run() {
     return;
   }
 
-  import { runInference } from "http://haehn.github.io/brainchop/brainchop-mainthread.js";
-  import { inferenceModelsList, brainChopOpts } from "http://haehn.github.io/brainchop/brainchop-parameters.js";
-  import { isChrome, localSystemDetails } from "http://haehn.github.io/brainchop/brainchop-diagnostics.js";
-  import MyWorker from "http://haehn.github.io/brainchop/brainchop-webworker.js?worker";
+  // JS MODULE HACK
+  const moduleScript = document.createElement("script");
+  moduleScript.type = "module";
+  moduleScript.src = "https://boostlet.org/examples/brainchop_runner.js";  
+  document.head.appendChild(moduleScript);
 
 };
