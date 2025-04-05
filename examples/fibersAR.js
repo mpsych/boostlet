@@ -112,7 +112,7 @@ function run() {
             fiberGroup.add(line);
           }
 
-          fiberGroup.scale.set(0.01, 0.01, 0.01);
+          fiberGroup.scale.set(0.1, 0.1, 0.1);
           entity.setObject3D('mesh', fiberGroup);
 
         } else {
