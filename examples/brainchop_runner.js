@@ -5,9 +5,9 @@ CATEGORY = 'Hidden';
 import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runInference }) => {
   import("https://haehn.github.io/brainchop/brainchop-parameters.js").then(({ inferenceModelsList, brainChopOpts }) => {
     import("https://haehn.github.io/brainchop/brainchop-diagnostics.js").then(({ isChrome, localSystemDetails }) => {
-      const worker = new Worker("https://haehn.github.io/brainchop/brainchop-webworker.js", {
-        type: "module"
-      });
+      // const worker = new Worker("https://haehn.github.io/brainchop/brainchop-webworker.js", {
+        // type: "module"
+      // });
 
 
       async function ensureConformed() {
