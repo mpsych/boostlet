@@ -51,7 +51,7 @@ function run() {
 
       setTimeout(() => {
 
-        const meshObj = nv.meshes[0];
+        const meshObj = Boostlet.framework.instance.meshes[0];
         const verts = meshObj.pts;
 
         if (meshObj.tris && meshObj.tris.length > 0) {
