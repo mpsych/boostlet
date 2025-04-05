@@ -79,7 +79,7 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
       // opts.rootURL should be the url without the query string
       const urlParams = new URL(window.location.href);
       // remove the query string
-      opts.rootURL = 'https://haehn.github.com/brainchop/public';//urlParams.origin + urlParams.pathname;
+      opts.rootURL = 'https://haehn.github.io/brainchop/public';//urlParams.origin + urlParams.pathname;
       // if (workerCheck.checked) {
       //   if (typeof chopWorker !== "undefined") {
       //     console.log(
