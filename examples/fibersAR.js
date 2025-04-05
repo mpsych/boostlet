@@ -112,14 +112,14 @@ function run() {
             fiberGroup.add(line);
           }
 
-          fiberGroup.scale.set(0.1, 0.1, 0.1);
+          fiberGroup.scale.set(0.05, 0.05, 0.05);
           entity.setObject3D('mesh', fiberGroup);
 
         } else {
           console.warn('Neither offsetPt0 nor tris were available. Nothing to render.');
         }
 
-        currentScale = 0.1;
+        currentScale = 0.05;
         window.addEventListener('keydown', (e) => {
           if (e.key === '+' || e.key === '=') {
             currentScale *= 1.1;
