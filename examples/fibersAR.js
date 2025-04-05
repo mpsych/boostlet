@@ -64,25 +64,55 @@ function run() {
             const start = offsetPt0[i];
             const end = offsetPt0[i + 1];
 
-            if (end - start < 2) continue; // skip too-short fibers
+            if (end - start < 2) continue;
 
-            const streamline = [];
+            const segmentPoints = [];
+            const segmentColors = [];
 
             for (let j = start; j < end; j++) {
               const x = pts[j * 3];
               const y = pts[j * 3 + 1];
               const z = pts[j * 3 + 2];
-              streamline.push(new THREE.Vector3(x, y, z));
+
+              segmentPoints.push(x, y, z);
+
+              if (j < end - 1) {
+                const x2 = pts[(j + 1) * 3];
+                const y2 = pts[(j + 1) * 3 + 1];
+                const z2 = pts[(j + 1) * 3 + 2];
+
+                const dx = x2 - x;
+                const dy = y2 - y;
+                const dz = z2 - z;
+
+                const length = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+                const ux = Math.abs(dx / length);
+                const uy = Math.abs(dy / length);
+                const uz = Math.abs(dz / length);
+
+                // Set color based on segment direction
+                segmentColors.push(ux, uy, uz); // for point j
+              } else {
+                // Repeat last color
+                const lastColor = segmentColors.slice(-3);
+                segmentColors.push(...lastColor);
+              }
             }
 
-            const geometry = new THREE.BufferGeometry().setFromPoints(streamline);
-            const material = new THREE.LineBasicMaterial({ color: 0xff00ff }); // magenta
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(segmentPoints, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(segmentColors, 3));
+
+            const material = new THREE.LineBasicMaterial({
+              vertexColors: true,
+              linewidth: 1
+            });
+
             const line = new THREE.Line(geometry, material);
             fiberGroup.add(line);
           }
 
-
-          fiberGroup.scale.set(0.1, 0.1, 0.1);
+          fiberGroup.scale.set(0.01, 0.01, 0.01);
           entity.setObject3D('mesh', fiberGroup);
 
         } else {
