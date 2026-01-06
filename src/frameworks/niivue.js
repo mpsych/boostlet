@@ -23,57 +23,71 @@ export class NiiVue extends Framework {
 
   get_image(from_canvas) {
 
-    let element = this.instance.canvas;
+    
     let pixels = null;
     let width = null;
     let height = null;
 
-
-    // TODO this is hacky going through the canvas
-    // later should grab the real volume data
-
-    let old_crosshaircolor = this.instance.opts.crosshairColor;
-    let old_crosshairwidth = this.instance.opts.crosshairWidth;
-
-    this.instance.setCrosshairColor([0,0,0,0]);
-    this.instance.opts.crosshairWidth=0;
-    this.instance.updateGLVolume();
-
-
-    let ctx = this.instance.gl;
-
-    
-    width = ctx.drawingBufferWidth;
-    height = ctx.drawingBufferHeight;
-
-    pixels = new Uint8Array(width * height * 4);
-    ctx.readPixels(
-      0, 
-      0, 
-      width, 
-      height, 
-      ctx.RGBA, 
-      ctx.UNSIGNED_BYTE, 
-      pixels);
-
-    // restore crosshairs
-    this.instance.setCrosshairColor(old_crosshaircolor);
-    this.instance.opts.crosshairWidth = old_crosshairwidth;
-
     if (!Util.is_defined(from_canvas)) {
+
+      // use the canvas
+
+      let element = this.instance.canvas;
+
+      let old_crosshaircolor = this.instance.opts.crosshairColor;
+      let old_crosshairwidth = this.instance.opts.crosshairWidth;
+
+      this.instance.setCrosshairColor([0,0,0,0]);
+      this.instance.opts.crosshairWidth=0;
+      this.instance.updateGLVolume();
+
+
+      let ctx = this.instance.gl;
+
+      
+      width = ctx.drawingBufferWidth;
+      height = ctx.drawingBufferHeight;
+
+      pixels = new Uint8Array(width * height * 4);
+      ctx.readPixels(
+        0, 
+        0, 
+        width, 
+        height, 
+        ctx.RGBA, 
+        ctx.UNSIGNED_BYTE, 
+        pixels);
+
+      // restore crosshairs
+      this.instance.setCrosshairColor(old_crosshaircolor);
+      this.instance.opts.crosshairWidth = old_crosshairwidth;
+
 
       // convert rgba pixels to grayscale
       pixels = Util.rgba_to_grayscale(pixels);
 
+
     } else {
 
-      // TODO
-      // not easily possible yet
-      // we could hack it using 
-      // nv.back.get_value(x,y,z)
-      // based on the dimensions
-      // nv.back.dims.slice(1);
-      // but devs promised easy access in the future
+      // grab the real pixels of the current slice and return it
+      // set width and height accordingly
+
+      let v =  this.instance.volumes[0];
+
+      // TODO this gives us the FULL VOLUME
+      // but we want only the current Slice
+      let start = [0,0,0];
+      let end = [v.dims[1], v.dims[2], v.dims[3]];
+
+      pixels = v.getVolumeData(start, end);
+      width = v.dims[1]; // TODO we need to figure out which view we are actually using or shall we work in 3D?
+      height = v.dims[2]; 
+
+      // NOTE: THIS ONLY WORKS IN SOME CASES
+      // WE REALLY NEED TO DO THE FOLLOWING TO FIX
+      // 1. figure out which view is requested
+      // 2. update start and end based on that view
+      // 3. set width and height based on that view
 
     }
 
