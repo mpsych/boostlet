@@ -183,55 +183,22 @@
   </style>
   <script type="text/javascript">
 
-    // https://raw.githubusercontent.com/mpsych/boostlet/main/examples/sobel.js
-    //load_boostlet("https://raw.githubusercontent.com/mpsych/boostlet/main/examples/sobel.js", function(e) {compile_boostlet('sobel',e)})
-
-
-    function load_boostlet(url, callback) {
-
-        let xhr = new XMLHttpRequest();
-        xhr.open("GET", url);
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4) {
-            // request done
-            callback( xhr.response );
-
-            return;
-
-          }
-        }
-
-        xhr.send(null)
-    }
-
-
-    // FROM https://caiorss.github.io/bookmarklet-maker/
-    function compile_boostlet (code){
-
-        var output = "javascript:" +  encodeURIComponent("(function(){" + code.trim() +  "})();");
-
-        return output;
-
-    }
-
     function setup_boostlet_button(id, url) {
 
         var link = document.getElementById(id);
 
-        load_boostlet(url, function(code) {
+        // fetch fresh on every click so updates are picked up without re-dragging
+        var fetcher = '(function(){fetch("' + url + '?_="+Date.now()).then(function(r){return r.text()}).then(function(c){eval(c)})})();';
+        link.href = 'javascript:' + encodeURIComponent(fetcher);
 
-            output = compile_boostlet(code);
-            link.href = output;
-
-        });
-
-    } 
+    }
 
     window.onload = function() {
 
-        var examples = ['sobel.js', 'segmentanything.js', 'imageCaptioning.js', 'meshAR.js', 'fibersAR.js', 'plotly.js', 'trako.js', 'melanoma.js', 'webllm.js', 'brainchop.js', 'CatVSDog.js', 'PixelExplorer.js', 'roiStats.js'];
+        var examples = ['sobel.js', 'segmentanything.js', 'imageCaptioning.js', 'meshAR.js', 'fibersAR.js', 'plotly.js', 'trako.js', 'melanoma.js', 'webllm.js', 'brainchop.js', 'CatVSDog.js', 'PixelExplorer.js', 'roiStats.js', 'numpyBoostlet.js', 'sync.js'];
 
         var baseurl = 'https://raw.githubusercontent.com/mpsych/boostlet/main/examples/';
+
 
         for (e in examples) {
 
@@ -324,6 +291,10 @@
                <div><a href='' id='PixelExplorer.js'><button id='PixelExplorer.js' class="button">Pixel Explorer (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='PixelExplorer.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
 
                <div><a href='' id='roiStats.js'><button id='roiStats.js' class="button">ROI Stats (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='roiStats.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+               <div><a href='' id='numpyBoostlet.js'><button id='numpyBoostlet.js' class="button">NumPy Editor (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='numpyBoostlet.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+               <div><a href='' id='sync.js'><button id='sync.js' class="button">Sync (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='sync.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
 
         </div>
 

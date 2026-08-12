@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><title>dropbox auth</title></head>
+<body>
+<p>authorizing...</p>
+<script>
+  var code = new URLSearchParams(location.search).get('code')
+  if (code && window.opener) {
+    window.opener.postMessage({ type: 'dropbox-auth', code: code }, '*')
+    document.body.textContent = 'done you can close this window'
+    setTimeout(function() { window.close() }, 1000)
+  } else {
+    document.body.textContent = 'something went wrong'
+  }
+</script>
+</body>
+</html>
