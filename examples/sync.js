@@ -21,9 +21,58 @@
     dropboxToken: null, roomCode: null
   }
 
+  // ===== latency measurement state =====
+
+  const _pendingPings = new Map() // id -> callback(rtt)
+  let _pingCounter = 0
+
   // ===== public api =====
 
   window.__sync_send = function (msg) { broadcast(msg) }
+
+  // Measure round-trip latency to all connected peers.
+  // Usage (in console): window.__sync_measureLatency(100).then(console.table)
+  // Returns a promise resolving to [{peerId, n, mean, std, min, max}]
+  window.__sync_measureLatency = function (nSamples) {
+    nSamples = nSamples || 100
+    const openPeers = [...state.peers.entries()].filter(([, p]) => p.channel?.readyState === 'open')
+    if (!openPeers.length) { console.warn('[sync] no open peers'); return Promise.resolve([]) }
+    return Promise.all(openPeers.map(([peerId, peer]) => new Promise(resolve => {
+      const samples = []
+      function next () {
+        const id = `${peerId}_${_pingCounter++}`
+        _pendingPings.set(id, rtt => {
+          samples.push(rtt)
+          if (samples.length === nSamples) {
+            const mean = samples.reduce((a, b) => a + b, 0) / nSamples
+            const std  = Math.sqrt(samples.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / nSamples)
+            resolve({ peerId, n: nSamples, mean: +mean.toFixed(2), std: +std.toFixed(2), min: +Math.min(...samples).toFixed(2), max: +Math.max(...samples).toFixed(2) })
+          } else next()
+        })
+        try { peer.channel.send(JSON.stringify({ type: 'latency-ping', id, t: performance.now() })) }
+        catch (e) { _pendingPings.delete(id); resolve(null) }
+      }
+      next()
+    })))
+  }
+
+  // Pretty-print a latency report to the console.
+  // Usage: window.__sync_latencyReport(100)
+  window.__sync_latencyReport = function (nSamples) {
+    return window.__sync_measureLatency(nSamples || 100).then(results => {
+      const valid = results.filter(Boolean)
+      if (!valid.length) { console.warn('[sync] no peers connected'); return results }
+      console.log(`[sync] latency report — ${valid.length} peer(s), ${valid[0]?.n} samples each`)
+      console.table(valid.map(r => ({
+        peerId: r.peerId,
+        'mean (ms)': r.mean,
+        'std (ms)': r.std,
+        'min (ms)': r.min,
+        'max (ms)': r.max
+      })))
+      return results
+    })
+  }
 
   window.__boostlet_sync_destroy = function () {
     if (state.pollId) clearInterval(state.pollId)
@@ -457,6 +506,15 @@
         Boostlet.hint(msg.match ? 'peer connected' : 'volumes differ — use dropbox to share', msg.match ? 2000 : 6000)
         return
       }
+      if (msg.type === 'latency-ping') {
+        try { channel.send(JSON.stringify({ type: 'latency-pong', id: msg.id, origT: msg.t })) } catch (e) {}
+        return
+      }
+      if (msg.type === 'latency-pong') {
+        const cb = _pendingPings.get(msg.id)
+        if (cb) { _pendingPings.delete(msg.id); cb(performance.now() - msg.origT) }
+        return
+      }
       if (msg.type === 'scene-patch') {
         state.applyingRemote = true
         applyDiff(msg.patch)
@@ -487,6 +545,8 @@
     if (!peer) return
     peer.channel?.close(); peer.conn.close()
     state.peers.delete(peerId)
+    // cancel any in-flight pings to this peer
+    _pendingPings.forEach((cb, id) => { if (id.startsWith(peerId + '_')) { _pendingPings.delete(id); cb(Infinity) } })
     Boostlet.hint('peer disconnected', 2000)
   }
 
