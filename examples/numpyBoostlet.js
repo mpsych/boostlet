@@ -32,7 +32,8 @@ const syncEntry = {
       applyRemoteCode(msg.code)
     }
     if (msg.type === 'numpy-run') {
-      applyRemoteCode(msg.code)
+      // run what is in the local editor only
+      // never execute code from the message payload
       runCode(false)
     }
     if (msg.type === 'numpy-undo') {
@@ -75,7 +76,7 @@ async function setup() {
   window.np = await import(NUMPY_TS_URL);
 
   // wraps the full volume typed array into a numpyts ndarray
-  // no slope or intercept applied here
+  // no slope or intercept applied here so values are raw voxel units
   Boostlet.to_np = function() {
     const img = Boostlet.nv.volumes[0].img;
     return np.array(Array.from(img), 'float32');
@@ -92,7 +93,97 @@ async function setup() {
   // load ace then build the editor panel
   const aceScript = document.createElement('script');
   aceScript.src = ACE_URL;
-  aceScript.onload = function() { plot(); };
+  aceScript.onload = function() {
+    plot();
+
+    // ===== benchmark =====
+    // Measure wall time for core operations over the loaded volume.
+    // Usage (in console): window.__numpy_benchmark(20).then(r => console.table(r.table))
+    // nRuns: number of repetitions per operation (default 20; threshold capped at 5)
+    window.__numpy_benchmark = async function (nRuns) {
+      nRuns = nRuns || 20
+      const vol = Boostlet.nv?.volumes?.[0]
+      if (!vol) { console.warn('[numpy-bench] no volume loaded'); return null }
+
+      const dims = Array.from(vol.hdr.dims).slice(1, 4)
+      const nVoxels = dims.reduce((a, b) => a * b, 1)
+      const mbF32 = (nVoxels * 4 / 1024 / 1024).toFixed(1)
+      console.log(`[numpy-bench] ${dims.join('×')}  ${nVoxels.toLocaleString()} voxels  ${mbF32} MB float32`)
+
+      function stats (arr) {
+        const n = arr.length
+        const mean = arr.reduce((a, b) => a + b, 0) / n
+        const std  = Math.sqrt(arr.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / n)
+        return { n, mean: +mean.toFixed(2), std: +std.toFixed(2), min: +Math.min(...arr).toFixed(2), max: +Math.max(...arr).toFixed(2) }
+      }
+
+      // warm up — avoids JIT cold-start skewing first sample
+      { const _a = Boostlet.to_np(); Boostlet.from_np(_a) }
+
+      // 1. to_np: copy vol.img into numpy-ts ndarray
+      const toNpTimes = []
+      for (let i = 0; i < nRuns; i++) {
+        const t0 = performance.now(); Boostlet.to_np(); toNpTimes.push(performance.now() - t0)
+      }
+
+      // 2. from_np + render: write ndarray back (identity, no change)
+      const _arr = Boostlet.to_np()
+      const fromNpTimes = []
+      for (let i = 0; i < nRuns; i++) {
+        const t0 = performance.now(); Boostlet.from_np(_arr); fromNpTimes.push(performance.now() - t0)
+      }
+
+      // 3. snapshot: vol.img.slice() (saved before every run for undo)
+      const snapshotTimes = []
+      for (let i = 0; i < nRuns; i++) {
+        const t0 = performance.now(); vol.img.slice(); snapshotTimes.push(performance.now() - t0)
+      }
+
+      // 4. undo: vol.img.set() + updateGLVolume
+      const _snap = vol.img.slice()
+      const undoTimes = []
+      for (let i = 0; i < nRuns; i++) {
+        const t0 = performance.now(); vol.img.set(_snap); Boostlet.nv.updateGLVolume(); undoTimes.push(performance.now() - t0)
+      }
+
+      // 5. full threshold script (same as paper example) — capped at 5 runs, restores volume each time
+      const _orig = vol.img.slice()
+      const thresholdScript = `
+        const vol = Boostlet.nv.volumes[0]
+        const slope = vol.hdr.scl_slope || 1
+        const inter = vol.hdr.scl_inter || 0
+        const displayThresh = 200
+        const rawThresh = (displayThresh - inter) / slope
+        const arr = Boostlet.to_np()
+        const mask = np.greater(arr, np.array([rawThresh], 'float32'))
+        Boostlet.from_np(np.multiply(arr, mask))
+      `
+      const AsyncFn = Object.getPrototypeOf(async function () {}).constructor
+      const threshTimes = []
+      for (let i = 0; i < Math.min(nRuns, 5); i++) {
+        vol.img.set(_orig)
+        const t0 = performance.now()
+        await new AsyncFn(thresholdScript)()
+        threshTimes.push(performance.now() - t0)
+      }
+      vol.img.set(_orig); Boostlet.nv.updateGLVolume()
+
+      const table = {
+        'to_np':            stats(toNpTimes),
+        'from_np + render': stats(fromNpTimes),
+        'snapshot':         stats(snapshotTimes),
+        'undo':             stats(undoTimes),
+        'threshold script': stats(threshTimes)
+      }
+
+      console.log(`[numpy-bench] results (ms):`)
+      console.table(Object.fromEntries(Object.entries(table).map(([k, v]) =>
+        [k, `${v.mean} ± ${v.std}  (min ${v.min}, max ${v.max}, n=${v.n})`]
+      )))
+
+      return { dims, nVoxels, mbF32: +mbF32, table }
+    }
+  };
   document.head.appendChild(aceScript);
 }
 
@@ -120,7 +211,7 @@ function runCode(broadcastRun) {
   new AsyncFunction(code)().then(() => {
     console.log = origLog;
     if (broadcastRun && typeof window.__sync_send === 'function') {
-      window.__sync_send({ type: 'numpy-run', code })
+      window.__sync_send({ type: 'numpy-run' })
     }
   }).catch(err => {
     outputDiv.innerHTML += '<span style="color:#f77">' + err.toString() + '</span>';
@@ -215,26 +306,24 @@ function plot() {
   editor.setFontSize(13);
   editor.setOption('wrap', true);
   editor.setValue(
-`// Available API:
-//   Boostlet.nv          — the live NiiVue instance
-//   Boostlet.to_np()     — wraps vol.img into a numpyts ndarray
-//   Boostlet.from_np(arr)— writes an ndarray or typed array back and re-renders
-//   np                   — numpyts, loaded globally
+`// Boostlet.nv           live niivue instance
+// Boostlet.to_np()      vol.img as float32 ndarray (raw voxel values)
+// Boostlet.from_np(arr) write ndarray back and rerender
+// np                    numpyts
 
-// --- Example 1: plain typed-array manipulation (no np needed) ---
-const vol = Boostlet.nv.volumes[0];
-const img = vol.img;
+// example 1 scale
+const arr = Boostlet.to_np()
+Boostlet.from_np(np.multiply(arr, np.array([2.0], 'float32')))
 
-// clamp every voxel to half its current value
-for (let i = 0; i < img.length; i++) {
-  img[i] = img[i] * 0.5;
-}
-Boostlet.nv.updateGLVolume();
-
-// --- Example 2: using numpyts ---
-// const arr = Boostlet.to_np();
-// const scaled = np.multiply(arr, np.array([2.0], 'float32'));
-// Boostlet.from_np(scaled);`,
+// example 2 threshold in display space
+// const vol = Boostlet.nv.volumes[0]
+// const slope = vol.hdr.scl_slope || 1
+// const inter = vol.hdr.scl_inter || 0
+// const displayThresh = 200
+// const rawThresh = (displayThresh - inter) / slope
+// const arr = Boostlet.to_np()
+// const mask = np.greater(arr, np.array([rawThresh], 'float32'))
+// Boostlet.from_np(np.multiply(arr, mask))`,
     -1
   );
   window._numpyEditor = editor;
