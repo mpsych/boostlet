@@ -164,7 +164,12 @@
 
   function applyDiff(diff) {
     const nv = state.nv
-    if (diff.crosshairPos) { nv.scene.crosshairPos = new Float32Array(diff.crosshairPos); nv.drawScene?.() }
+    if (diff.crosshairPos) {
+      nv.scene.crosshairPos = new Float32Array(diff.crosshairPos)
+      nv.drawScene?.()
+      // so other boostlets see the move
+      nv.createOnLocationChange?.()
+    }
     if (diff.sliceType !== undefined && nv.opts.sliceType !== diff.sliceType) nv.setSliceType?.(diff.sliceType)
     const vol = nv.volumes?.[0]
     if (!vol) return
