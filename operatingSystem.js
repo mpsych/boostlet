@@ -1,23 +1,12 @@
-const { execSync } = require('child_process');
-const os = require('os');
+const fs = require('fs');
 
-// Define source and destination files
-const source = './submodule/BoxCraft/dist/boxcraft.min.js';
-const destination = './dist/';
+// parcel outputs boxCraft.min.js but canvasFallback.js loads boxcraft.min.js
+const src = './submodule/BoxCraft/dist/boxCraft.min.js';
+const dest = './dist/boxcraft.min.js';
 
-// Commands for different OSes
-const copyCommand = {
-  'win32': `copy ${source} ${destination}`,
-  'linux': `cp ${source} ${destination}`,
-  'darwin': `cp ${source} ${destination}`  // macOS
-};
-
-// Get the current OS platform
-const platform = os.platform();
-
-// Execute the command for the current OS
 try {
-  execSync(`${copyCommand[platform]} && ${copyCommand[platform]}.map`);
+  fs.copyFileSync(src, dest);
+  fs.copyFileSync(src + '.map', dest + '.map');
   console.log('Files copied successfully.');
 } catch (error) {
   console.error('Error during file copying:', error);

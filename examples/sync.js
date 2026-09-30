@@ -32,25 +32,37 @@
 
   // Measure round-trip latency to all connected peers.
   // Usage (in console): window.__sync_measureLatency(100).then(console.table)
-  // Returns a promise resolving to [{peerId, n, mean, std, min, max}]
-  window.__sync_measureLatency = function (nSamples) {
+  // lost pings count as timeouts
+  window.__sync_measureLatency = function (nSamples, timeoutMs) {
     nSamples = nSamples || 100
+    timeoutMs = timeoutMs || 2000
     const openPeers = [...state.peers.entries()].filter(([, p]) => p.channel?.readyState === 'open')
     if (!openPeers.length) { console.warn('[sync] no open peers'); return Promise.resolve([]) }
     return Promise.all(openPeers.map(([peerId, peer]) => new Promise(resolve => {
       const samples = []
+      let sent = 0, timeouts = 0
+      function finish () {
+        if (!samples.length) { resolve({ peerId, n: 0, timeouts }); return }
+        const n = samples.length
+        const sorted = [...samples].sort((a, b) => a - b)
+        const mean = samples.reduce((a, b) => a + b, 0) / n
+        const std  = Math.sqrt(samples.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / n)
+        resolve({ peerId, n, timeouts, median: +sorted[Math.floor(n / 2)].toFixed(2), mean: +mean.toFixed(2), std: +std.toFixed(2), min: +sorted[0].toFixed(2), max: +sorted[n - 1].toFixed(2) })
+      }
       function next () {
+        if (sent === nSamples) { finish(); return }
+        sent++
         const id = `${peerId}_${_pingCounter++}`
+        const timer = setTimeout(() => { _pendingPings.delete(id); timeouts++; next() }, timeoutMs)
         _pendingPings.set(id, rtt => {
-          samples.push(rtt)
-          if (samples.length === nSamples) {
-            const mean = samples.reduce((a, b) => a + b, 0) / nSamples
-            const std  = Math.sqrt(samples.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / nSamples)
-            resolve({ peerId, n: nSamples, mean: +mean.toFixed(2), std: +std.toFixed(2), min: +Math.min(...samples).toFixed(2), max: +Math.max(...samples).toFixed(2) })
-          } else next()
+          clearTimeout(timer)
+          // Infinity means the peer dropped
+          if (Number.isFinite(rtt)) samples.push(rtt)
+          else timeouts++
+          next()
         })
         try { peer.channel.send(JSON.stringify({ type: 'latency-ping', id, t: performance.now() })) }
-        catch (e) { _pendingPings.delete(id); resolve(null) }
+        catch (e) { clearTimeout(timer); _pendingPings.delete(id); timeouts++; next() }
       }
       next()
     })))
@@ -60,11 +72,14 @@
   // Usage: window.__sync_latencyReport(100)
   window.__sync_latencyReport = function (nSamples) {
     return window.__sync_measureLatency(nSamples || 100).then(results => {
-      const valid = results.filter(Boolean)
+      const valid = results.filter(r => r && r.n)
       if (!valid.length) { console.warn('[sync] no peers connected'); return results }
-      console.log(`[sync] latency report — ${valid.length} peer(s), ${valid[0]?.n} samples each`)
+      console.log(`[sync] latency report, ${valid.length} peer(s), ${valid[0]?.n} samples each`)
       console.table(valid.map(r => ({
         peerId: r.peerId,
+        n: r.n,
+        timeouts: r.timeouts,
+        'median (ms)': r.median,
         'mean (ms)': r.mean,
         'std (ms)': r.std,
         'min (ms)': r.min,
@@ -498,12 +513,12 @@
         hashVolume().then(localHash => {
           const match = localHash === msg.hash || (!localHash && !msg.hash)
           try { channel.send(JSON.stringify({ type: 'hash-ack', match })) } catch (e) {}
-          Boostlet.hint(match ? 'peer connected' : 'volumes differ — use dropbox to share', match ? 2000 : 6000)
+          Boostlet.hint(match ? 'peer connected' : 'volumes differ, use dropbox to share', match ? 2000 : 6000)
         })
         return
       }
       if (msg.type === 'hash-ack') {
-        Boostlet.hint(msg.match ? 'peer connected' : 'volumes differ — use dropbox to share', msg.match ? 2000 : 6000)
+        Boostlet.hint(msg.match ? 'peer connected' : 'volumes differ, use dropbox to share', msg.match ? 2000 : 6000)
         return
       }
       if (msg.type === 'latency-ping') {

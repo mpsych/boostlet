@@ -82,7 +82,7 @@ export class NiiVue extends Framework {
       let end = [v.dims[1], v.dims[2], v.dims[3]];
 
       if(currentSlice == 0){
-        // axial — slice along Z
+        // axial, slice along Z
         let z_index = Math.floor(currentCrossHairPos[2] * v.dims[3]);
         width = v.dims[1];
         height = v.dims[2];
@@ -90,7 +90,7 @@ export class NiiVue extends Framework {
         end = [v.dims[1], v.dims[2], z_index + 1];
       }
       else if(currentSlice == 1){
-        // coronal — slice along Y
+        // coronal, slice along Y
         let y_index = Math.floor(currentCrossHairPos[1] * v.dims[2]);
         width = v.dims[1];
         height = v.dims[3];
@@ -98,7 +98,7 @@ export class NiiVue extends Framework {
         end = [v.dims[1], y_index + 1 , v.dims[3]];
       }
       else if(currentSlice == 2){
-        // sagittal — slice along X
+        // sagittal, slice along X
         let x_index = Math.floor(currentCrossHairPos[0] * v.dims[1]);
         width = v.dims[2];
         height = v.dims[3];
@@ -106,7 +106,7 @@ export class NiiVue extends Framework {
         end = [x_index + 1, v.dims[2], v.dims[3]];
       }
       else {
-        // multiplanar (sliceType 3) — no single slice to extract,
+        // multiplanar (sliceType 3), no single slice to extract,
         // return the full volume
         width = v.dims[1];
         height = v.dims[2];
@@ -123,7 +123,11 @@ export class NiiVue extends Framework {
 
 
   get_subvolume(start, end) {
-    const [data, dims] = this.instance.volumes[0].getVolumeData(start, end);
+    const v = this.instance.volumes[0];
+    // getVolumeData returns nothing if a coord is negative
+    const last = [v.dims[1] - 1, v.dims[2] - 1, v.dims[3] - 1];
+    const clamp = (p, i) => Math.min(Math.max(0, Math.round(p)), last[i]);
+    const [data, dims] = v.getVolumeData(start.map(clamp), end.map(clamp));
     return { data, dims };
   }
 
