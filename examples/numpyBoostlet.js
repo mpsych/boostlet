@@ -117,7 +117,7 @@ async function setup() {
         return { n, mean: +mean.toFixed(2), std: +std.toFixed(2), min: +Math.min(...arr).toFixed(2), max: +Math.max(...arr).toFixed(2) }
       }
 
-      // warm up — avoids JIT cold-start skewing first sample
+      // warm up so JIT doesnt skew the first sample
       { const _a = Boostlet.to_np(); Boostlet.from_np(_a) }
 
       // 1. to_np: copy vol.img into numpy-ts ndarray
@@ -146,16 +146,16 @@ async function setup() {
         const t0 = performance.now(); vol.img.set(_snap); Boostlet.nv.updateGLVolume(); undoTimes.push(performance.now() - t0)
       }
 
-      // 5. full threshold script (same as paper example) — capped at 5 runs, restores volume each time
+      // 5. threshold script from figure 3, max 5 runs, restores volume each time
       const _orig = vol.img.slice()
       const thresholdScript = `
         const vol = Boostlet.nv.volumes[0]
         const slope = vol.hdr.scl_slope || 1
         const inter = vol.hdr.scl_inter || 0
-        const displayThresh = 200
+        const displayThresh = 360
         const rawThresh = (displayThresh - inter) / slope
         const arr = Boostlet.to_np()
-        const mask = np.greater(arr, np.array([rawThresh], 'float32'))
+        const mask = np.greater(arr, rawThresh)
         Boostlet.from_np(np.multiply(arr, mask))
       `
       const AsyncFn = Object.getPrototypeOf(async function () {}).constructor
@@ -319,10 +319,10 @@ Boostlet.from_np(np.multiply(arr, np.array([2.0], 'float32')))
 // const vol = Boostlet.nv.volumes[0]
 // const slope = vol.hdr.scl_slope || 1
 // const inter = vol.hdr.scl_inter || 0
-// const displayThresh = 200
+// const displayThresh = 360
 // const rawThresh = (displayThresh - inter) / slope
 // const arr = Boostlet.to_np()
-// const mask = np.greater(arr, np.array([rawThresh], 'float32'))
+// const mask = np.greater(arr, rawThresh)
 // Boostlet.from_np(np.multiply(arr, mask))`,
     -1
   );
