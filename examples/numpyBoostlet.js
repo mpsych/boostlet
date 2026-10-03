@@ -79,7 +79,7 @@ async function setup() {
   // no slope or intercept applied here so values are raw voxel units
   Boostlet.to_np = function() {
     const img = Boostlet.nv.volumes[0].img;
-    return np.array(Array.from(img), 'float32');
+    return np.array(img, 'float32');
   };
 
   // writes a numpyts ndarray or plain typed array back into vol.img and renders
