@@ -118,12 +118,14 @@ async function setup() {
       }
 
       // warm up so JIT doesnt skew the first sample
-      { const _a = Boostlet.to_np(); Boostlet.from_np(_a) }
+      { const _a = Boostlet.to_np(); Boostlet.from_np(_a); _a.dispose?.() }
 
       // 1. to_np: copy vol.img into numpy-ts ndarray
       const toNpTimes = []
       for (let i = 0; i < nRuns; i++) {
-        const t0 = performance.now(); Boostlet.to_np(); toNpTimes.push(performance.now() - t0)
+        const t0 = performance.now(); const a = Boostlet.to_np(); toNpTimes.push(performance.now() - t0)
+        // free it so numpy-ts memory doesnt fill up
+        a.dispose?.()
       }
 
       // 2. from_np + render: write ndarray back (identity, no change)
@@ -132,6 +134,7 @@ async function setup() {
       for (let i = 0; i < nRuns; i++) {
         const t0 = performance.now(); Boostlet.from_np(_arr); fromNpTimes.push(performance.now() - t0)
       }
+      _arr.dispose?.()
 
       // 3. snapshot: vol.img.slice() (saved before every run for undo)
       const snapshotTimes = []
@@ -154,9 +157,13 @@ async function setup() {
         const inter = vol.hdr.scl_inter || 0
         const displayThresh = 360
         const rawThresh = (displayThresh - inter) / slope
+        const rawZero = Math.round((0 - inter) / slope)
         const arr = Boostlet.to_np()
         const mask = np.greater(arr, rawThresh)
-        Boostlet.from_np(np.multiply(arr, mask))
+        const a = np.subtract(arr, rawZero), b = np.multiply(a, mask)
+        const out = np.add(b, rawZero)
+        Boostlet.from_np(out)
+        for (const x of [arr, mask, a, b, out]) x.dispose?.()
       `
       const AsyncFn = Object.getPrototypeOf(async function () {}).constructor
       const threshTimes = []
@@ -313,7 +320,7 @@ function plot() {
 
 // example 1 scale
 const arr = Boostlet.to_np()
-Boostlet.from_np(np.multiply(arr, np.array([2.0], 'float32')))
+Boostlet.from_np(np.multiply(arr, 2.0))
 
 // example 2 threshold in display space
 // const vol = Boostlet.nv.volumes[0]
@@ -321,9 +328,11 @@ Boostlet.from_np(np.multiply(arr, np.array([2.0], 'float32')))
 // const inter = vol.hdr.scl_inter || 0
 // const displayThresh = 360
 // const rawThresh = (displayThresh - inter) / slope
+// const rawZero = Math.round((0 - inter) / slope)
 // const arr = Boostlet.to_np()
 // const mask = np.greater(arr, rawThresh)
-// Boostlet.from_np(np.multiply(arr, mask))`,
+// const out = np.add(np.multiply(np.subtract(arr, rawZero), mask), rawZero)
+// Boostlet.from_np(out)`,
     -1
   );
   window._numpyEditor = editor;
