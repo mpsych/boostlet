@@ -10,7 +10,7 @@ Uses the recorded `rec.json` from our run.
 
 1. Download sub-003 from OpenNeuro ds004697 v1.0.1:
    https://openneuro.org/crn/datasets/ds004697/snapshots/1.0.1/files/sub-003:ses-1:anat:sub-003_ses-1_T1w.nii.gz
-2. `pip install nibabel==5.4.2`
+2. `pip install nibabel==5.4.1`
 3. `python make_scaled.py` (should print scl_slope 0.0197)
 4. `python check.py`
 
