@@ -16,9 +16,9 @@
 
   const state = {
     nv: null, pusher: null, channel: null,
-    peers: new Map(), selfId: null, myHash: null,
+    peers: new Map(), selfId: null,
     last: {}, rafId: null, pollId: null,
-    dropboxToken: null, roomCode: null
+    dropboxToken: null, roomCode: null, sceneToken: null
   }
 
   // ===== latency measurement state =====
@@ -134,13 +134,13 @@
 
   // ===== scene =====
 
+  // not cached, the volume can change after hosting (dropbox load, numpy run)
+  // and this only runs when a peer connects
   async function hashVolume() {
-    if (state.myHash) return state.myHash
     const img = state.nv.volumes?.[0]?.img
     if (!img) return null
     const buf = await crypto.subtle.digest('SHA-256', img)
-    state.myHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
-    return state.myHash
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
   }
 
   function readScene(full) {
@@ -248,14 +248,22 @@
   async function publishScene(code, scene) {
     const sceneUrl = await dropboxUpload(`/scenes/${code}_${Date.now()}.json`, new TextEncoder().encode(JSON.stringify(scene)))
     if (!sceneUrl) return
-    await fetch(`${PUSHER_AUTH_URL}/scene`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, sceneUrl })
-    }).catch(() => {})
+    // the worker hands back a token on first publish, only that token can update the room
+    try {
+      const res = await fetch(`${PUSHER_AUTH_URL}/scene`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, sceneUrl, token: state.sceneToken })
+      })
+      const data = await res.json()
+      if (data.token) state.sceneToken = data.token
+    } catch (e) {}
   }
 
-  function makeCode() { return Math.random().toString(36).slice(2, 7) }
+  // 10 chars from a crypto source so room codes cant be guessed
+  function makeCode() {
+    return Array.from(crypto.getRandomValues(new Uint8Array(10)), b => (b % 36).toString(36)).join('')
+  }
 
   // ===== dropbox =====
 
@@ -609,8 +617,8 @@
     close.onclick = () => panel.remove()
     const status = el('div', 'font-size:11px;color:#666', 'starting...')
     status.id = '__sync_status'
-    const input = el('input', 'background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:4px 6px;font-family:monospace;font-size:12px;width:70px;outline:none')
-    input.placeholder = 'xxxxx'; input.maxLength = 8
+    const input = el('input', 'background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:4px 6px;font-family:monospace;font-size:12px;width:100px;outline:none')
+    input.placeholder = 'room code'; input.maxLength = 10
     const joinBtn = el('button', `${BTN};background:#1a3a6a;color:#fff`, 'join')
     joinBtn.onclick = () => {
       const code = input.value.trim().toLowerCase()

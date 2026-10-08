@@ -1,90 +1,98 @@
-// boostlet sync server
-// handles pusher channel auth (required for presence channels)
-// and scene snapshot storage so late joiners can load the scene
+// boostlet pusher auth worker (cloudflare workers)
+// handles pusher channel auth and scene url storage via kv
+// kv stores code -> { sceneUrl, token } with 30 day expiry
 // signaling (offer/answer/ice) goes peer to peer via pusher client events
-// no websocket server needed
 
-const express = require('express')
-const cors = require('cors')
-const Pusher = require('pusher')
-
-const app = express()
-app.use(cors())
-app.use(express.json())
-
-const pusher = new Pusher({
-  appId: process.env.PUSHER_APP_ID,
-  key: process.env.PUSHER_KEY,
-  secret: process.env.PUSHER_SECRET,
-  cluster: process.env.PUSHER_CLUSTER,
-  useTLS: true
-})
-
-// in memory scene store keyed by room code
-// scenes expire after 2 hours to avoid unbounded growth
-const scenes = new Map()
-const SCENE_TTL = 2 * 60 * 60 * 1000
-
-function pruneScenes() {
-  const now = Date.now()
-  for (const [code, entry] of scenes) {
-    if (now - entry.ts > SCENE_TTL) scenes.delete(code)
-  }
-}
-setInterval(pruneScenes, 10 * 60 * 1000)
-
-function makeCode() {
-  // 5 character alphanumeric room code
-  return Math.random().toString(36).slice(2, 7)
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Requested-With'
 }
 
-// pusher requires server side auth for presence and private channels
-// the client sends its socket id and the channel name
-// we sign it and send back the auth token
-app.post('/pusher/auth', (req, res) => {
-  const { socket_id, channel_name } = req.body
-  if (!socket_id || !channel_name) return res.status(400).json({ error: 'missing fields' })
+// 30 days
+const SCENE_TTL = 2592000
 
-  // presence channels carry member data — use user_id from request body
-  const presenceData = channel_name.startsWith('presence-') ? {
-    user_id: req.body.user_id || socket_id,
-    user_info: {}
-  } : null
+// lowercase alphanumeric, 5 allows codes from older sync.js clients
+const CODE_RE = /^[a-z0-9]{5,32}$/
 
-  try {
-    const auth = presenceData
-      ? pusher.authorizeChannel(socket_id, channel_name, presenceData)
-      : pusher.authorizeChannel(socket_id, channel_name)
-    res.json(auth)
-  } catch (e) {
-    res.status(500).json({ error: 'auth failed' })
+export default {
+  async fetch(request, env) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: CORS })
+    }
+
+    const url = new URL(request.url)
+
+    // scene url storage
+    // the first publish for a code gets a token back, and only that token
+    // can update the code later, so nobody else can repoint someone's room
+    if (url.pathname === '/scene' && request.method === 'POST') {
+      const { code, sceneUrl, token } = await request.json()
+      if (!code || !sceneUrl) return json({ error: 'missing fields' }, 400)
+      if (!CODE_RE.test(code)) return json({ error: 'bad code' }, 400)
+
+      const existing = parseEntry(await env.BOOSTLET_SCENES.get(code))
+      // entries from before tokens have no owner, so they stay writable
+      if (existing?.token && existing.token !== token) {
+        return json({ error: 'code taken' }, 409)
+      }
+
+      const owner = existing?.token || crypto.randomUUID()
+      await env.BOOSTLET_SCENES.put(code, JSON.stringify({ sceneUrl, token: owner }), { expirationTtl: SCENE_TTL })
+      return json({ ok: true, token: owner })
+    }
+
+    if (url.pathname.startsWith('/scene/') && request.method === 'GET') {
+      const code = url.pathname.slice(7)
+      const entry = parseEntry(await env.BOOSTLET_SCENES.get(code))
+      if (!entry) return json({ error: 'not found' }, 404)
+      // never send the token back out
+      return json({ sceneUrl: entry.sceneUrl })
+    }
+
+    // pusher auth
+    if (request.method !== 'POST') {
+      return new Response('not found', { status: 404, headers: CORS })
+    }
+
+    const body = await request.text()
+    const params = new URLSearchParams(body)
+    const socket_id = params.get('socket_id')
+    const channel_name = params.get('channel_name')
+    const user_id = params.get('user_id') || socket_id
+
+    if (!socket_id || !channel_name) {
+      return new Response('missing fields', { status: 400, headers: CORS })
+    }
+
+    // sign the exact channel_data string we send back so they always match
+    const channel_data = JSON.stringify({ user_id, user_info: {} })
+    const sig = await hmacSHA256(env.PUSHER_SECRET, `${socket_id}:${channel_name}:${channel_data}`)
+
+    return json({ auth: `${env.PUSHER_KEY}:${sig}`, channel_data })
   }
-})
+}
 
-// create a new scene and return its room code
-app.post('/scene', (req, res) => {
-  pruneScenes()
-  let code = makeCode()
-  while (scenes.has(code)) code = makeCode()
-  scenes.set(code, { scene: req.body, ts: Date.now() })
-  res.json({ code })
-})
+// old entries are a bare url string, new ones are json
+function parseEntry(raw) {
+  if (!raw) return null
+  try { return JSON.parse(raw) } catch (e) { return { sceneUrl: raw, token: null } }
+}
 
-// fetch scene for a room code
-app.get('/scene/:code', (req, res) => {
-  const entry = scenes.get(req.params.code)
-  if (!entry) return res.status(404).json({ error: 'not found' })
-  res.json(entry.scene)
-})
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS, 'Content-Type': 'application/json' }
+  })
+}
 
-// patch scene with updated display state (host polls this every 3s)
-app.patch('/scene/:code', (req, res) => {
-  const entry = scenes.get(req.params.code)
-  if (!entry) return res.status(404).json({ error: 'not found' })
-  Object.assign(entry.scene, req.body)
-  entry.ts = Date.now()
-  res.json({ ok: true })
-})
-
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log(`boostlet server running on ${PORT}`))
+async function hmacSHA256(secret, message) {
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message))
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
