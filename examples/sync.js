@@ -17,7 +17,7 @@
   const state = {
     nv: null, pusher: null, channel: null,
     peers: new Map(), selfId: null, myHash: null,
-    applyingRemote: false, rafId: null, pollId: null,
+    last: {}, rafId: null, pollId: null,
     dropboxToken: null, roomCode: null
   }
 
@@ -172,12 +172,17 @@
     }
     if (diff.sliceType !== undefined && nv.opts.sliceType !== diff.sliceType) nv.setSliceType?.(diff.sliceType)
     const vol = nv.volumes?.[0]
-    if (!vol) return
-    let dirty = false
-    if (diff.colormap && diff.colormap !== vol.colormap) { nv.setColormap?.(vol.id, diff.colormap); dirty = true }
-    if (diff.cal_min != null) { vol.cal_min = diff.cal_min; dirty = true }
-    if (diff.cal_max != null) { vol.cal_max = diff.cal_max; dirty = true }
-    if (dirty) nv.updateGLVolume?.()
+    if (vol) {
+      let dirty = false
+      if (diff.colormap && diff.colormap !== vol.colormap) { nv.setColormap?.(vol.id, diff.colormap); dirty = true }
+      if (diff.cal_min != null) { vol.cal_min = diff.cal_min; dirty = true }
+      if (diff.cal_max != null) { vol.cal_max = diff.cal_max; dirty = true }
+      if (dirty) nv.updateGLVolume?.()
+    }
+    // mark what we just applied as already seen so the broadcast loop
+    // doesnt send it straight back to the peer (that echo caused the shaking)
+    const cur = readScene(false)
+    for (const k of Object.keys(diff)) if (k in cur) state.last[k] = cur[k]
   }
 
   function isDropboxUrl(url) {
@@ -429,11 +434,10 @@
   }
 
   function startBroadcasting() {
-    let last = {}
+    const last = state.last
     let lastCrosshairBroadcast = 0
     const tick = () => {
       state.rafId = requestAnimationFrame(tick)
-      if (state.applyingRemote) return
       const cur = readScene(false)
       const now = Date.now()
       const patch = {}
@@ -536,16 +540,14 @@
         return
       }
       if (msg.type === 'scene-patch') {
-        state.applyingRemote = true
         applyDiff(msg.patch)
-        setTimeout(() => { state.applyingRemote = false }, 0)
         return
       }
       if (msg.type === 'volume-ready' && msg.volumeUrl) {
         // always load the dropbox volume regardless of whether a volume is already present
         Boostlet.hint('loading volume from dropbox', 3000)
         state.nv.loadVolumes([{ url: msg.volumeUrl }]).then(() => {
-          if (msg.scene) { state.applyingRemote = true; applyDiff(msg.scene); setTimeout(() => { state.applyingRemote = false }, 0) }
+          if (msg.scene) applyDiff(msg.scene)
         }).catch(() => Boostlet.hint('could not load volume from dropbox', 4000))
         return
       }
@@ -658,8 +660,14 @@
 
   // ===== utils =====
 
+  // query params count too (minus sync) since single page viewers like slicedrop
+  // keep what is loaded in the query string, not the path
   function isSamePage(a, b) {
-    try { const ua = new URL(a), ub = new URL(b); return ua.origin + ua.pathname === ub.origin + ub.pathname } catch { return false }
+    try {
+      const ua = new URL(a), ub = new URL(b)
+      for (const u of [ua, ub]) { u.searchParams.delete('sync'); u.searchParams.sort() }
+      return ua.origin + ua.pathname + ua.search === ub.origin + ub.pathname + ub.search
+    } catch { return false }
   }
 
 })() //
