@@ -68,10 +68,11 @@ async function setup(nv) {
   // fire immediately so panel populates on load
   const pos = nv.scene.crosshairPos;
   const dims = nv.volumes[0].dims;
+  // floor matches how niivue maps crosshair position to a voxel
   triggerUpdate({ vox: [
-    Math.round(pos[0] * dims[1]),
-    Math.round(pos[1] * dims[2]),
-    Math.round(pos[2] * dims[3])
+    Math.min(Math.floor(pos[0] * dims[1]), dims[1] - 1),
+    Math.min(Math.floor(pos[1] * dims[2]), dims[2] - 1),
+    Math.min(Math.floor(pos[2] * dims[3]), dims[3] - 1)
   ]});
 }
 
@@ -139,9 +140,17 @@ function plot() {
 function computeStats(np, data, volume) {
   const slope = (volume && volume.hdr.scl_slope) || 1;
   const inter = (volume && volume.hdr.scl_inter) || 0;
-  const a = np.array(Array.from(data), 'float32').multiply(slope).add(inter);
-  const scalar = v => typeof v === 'number' ? v : v.tolist ? v.tolist() : Number(v);
-  return {
+  // pass the typed array directly, Array.from is a slow extra copy
+  const raw = np.array(data, 'float32');
+  const scaled = raw.multiply(slope);
+  const a = scaled.add(inter);
+  // free any array results too, this runs on every crosshair move
+  const scalar = v => {
+    const n = typeof v === 'number' ? v : v.tolist ? v.tolist() : Number(v);
+    v?.dispose?.();
+    return n;
+  };
+  const stats = {
     mean : scalar(np.mean(a)),
     std  : scalar(np.std(a)),
     min  : scalar(np.min(a)),
@@ -149,6 +158,8 @@ function computeStats(np, data, volume) {
     p25  : scalar(np.percentile(a, 25)),
     p75  : scalar(np.percentile(a, 75)),
   };
+  for (const x of [raw, scaled, a]) x.dispose?.();
+  return stats;
 }
 
 })();

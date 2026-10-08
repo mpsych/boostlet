@@ -72,10 +72,11 @@ function setup(nv) {
   // make a loc object from current crosshair state so the panel fills immediately
   const pos = nv.scene.crosshairPos;
   const dims = nv.volumes[0].dims;
+  // floor matches how niivue maps crosshair position to a voxel
   const initialVox = [
-    Math.round(pos[0] * dims[1]),
-    Math.round(pos[1] * dims[2]),
-    Math.round(pos[2] * dims[3])
+    Math.min(Math.floor(pos[0] * dims[1]), dims[1] - 1),
+    Math.min(Math.floor(pos[1] * dims[2]), dims[2] - 1),
+    Math.min(Math.floor(pos[2] * dims[3]), dims[3] - 1)
   ];
   triggerUpdate({ vox: initialVox });
 }

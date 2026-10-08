@@ -16,9 +16,9 @@
 
   const state = {
     nv: null, pusher: null, channel: null,
-    peers: new Map(), selfId: null, myHash: null,
-    applyingRemote: false, rafId: null, pollId: null,
-    dropboxToken: null, roomCode: null
+    peers: new Map(), selfId: null,
+    last: {}, rafId: null, pollId: null,
+    dropboxToken: null, roomCode: null, sceneToken: null
   }
 
   // ===== latency measurement state =====
@@ -32,25 +32,37 @@
 
   // Measure round-trip latency to all connected peers.
   // Usage (in console): window.__sync_measureLatency(100).then(console.table)
-  // Returns a promise resolving to [{peerId, n, mean, std, min, max}]
-  window.__sync_measureLatency = function (nSamples) {
+  // lost pings count as timeouts
+  window.__sync_measureLatency = function (nSamples, timeoutMs) {
     nSamples = nSamples || 100
+    timeoutMs = timeoutMs || 2000
     const openPeers = [...state.peers.entries()].filter(([, p]) => p.channel?.readyState === 'open')
     if (!openPeers.length) { console.warn('[sync] no open peers'); return Promise.resolve([]) }
     return Promise.all(openPeers.map(([peerId, peer]) => new Promise(resolve => {
       const samples = []
+      let sent = 0, timeouts = 0
+      function finish () {
+        if (!samples.length) { resolve({ peerId, n: 0, timeouts }); return }
+        const n = samples.length
+        const sorted = [...samples].sort((a, b) => a - b)
+        const mean = samples.reduce((a, b) => a + b, 0) / n
+        const std  = Math.sqrt(samples.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / n)
+        resolve({ peerId, n, timeouts, median: +sorted[Math.floor(n / 2)].toFixed(2), mean: +mean.toFixed(2), std: +std.toFixed(2), min: +sorted[0].toFixed(2), max: +sorted[n - 1].toFixed(2) })
+      }
       function next () {
+        if (sent === nSamples) { finish(); return }
+        sent++
         const id = `${peerId}_${_pingCounter++}`
+        const timer = setTimeout(() => { _pendingPings.delete(id); timeouts++; next() }, timeoutMs)
         _pendingPings.set(id, rtt => {
-          samples.push(rtt)
-          if (samples.length === nSamples) {
-            const mean = samples.reduce((a, b) => a + b, 0) / nSamples
-            const std  = Math.sqrt(samples.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / nSamples)
-            resolve({ peerId, n: nSamples, mean: +mean.toFixed(2), std: +std.toFixed(2), min: +Math.min(...samples).toFixed(2), max: +Math.max(...samples).toFixed(2) })
-          } else next()
+          clearTimeout(timer)
+          // Infinity means the peer dropped
+          if (Number.isFinite(rtt)) samples.push(rtt)
+          else timeouts++
+          next()
         })
         try { peer.channel.send(JSON.stringify({ type: 'latency-ping', id, t: performance.now() })) }
-        catch (e) { _pendingPings.delete(id); resolve(null) }
+        catch (e) { clearTimeout(timer); _pendingPings.delete(id); timeouts++; next() }
       }
       next()
     })))
@@ -60,11 +72,14 @@
   // Usage: window.__sync_latencyReport(100)
   window.__sync_latencyReport = function (nSamples) {
     return window.__sync_measureLatency(nSamples || 100).then(results => {
-      const valid = results.filter(Boolean)
+      const valid = results.filter(r => r && r.n)
       if (!valid.length) { console.warn('[sync] no peers connected'); return results }
-      console.log(`[sync] latency report — ${valid.length} peer(s), ${valid[0]?.n} samples each`)
+      console.log(`[sync] latency report, ${valid.length} peer(s), ${valid[0]?.n} samples each`)
       console.table(valid.map(r => ({
         peerId: r.peerId,
+        n: r.n,
+        timeouts: r.timeouts,
+        'median (ms)': r.median,
         'mean (ms)': r.mean,
         'std (ms)': r.std,
         'min (ms)': r.min,
@@ -119,20 +134,23 @@
 
   // ===== scene =====
 
+  // not cached, the volume can change after hosting (dropbox load, numpy run)
+  // and this only runs when a peer connects
   async function hashVolume() {
-    if (state.myHash) return state.myHash
     const img = state.nv.volumes?.[0]?.img
     if (!img) return null
     const buf = await crypto.subtle.digest('SHA-256', img)
-    state.myHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
-    return state.myHash
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
   }
 
   function readScene(full) {
     const nv = state.nv
     const vol = nv.volumes?.[0]
+    // index explicitly, after loadDocument crosshairPos is a plain object
+    // like {0: .5, 1: .5, 2: .5} and Array.from would turn it into []
+    const pos = nv.scene?.crosshairPos
     const snap = {
-      crosshairPos: nv.scene ? Array.from(nv.scene.crosshairPos) : [0.5, 0.5, 0.5],
+      crosshairPos: pos ? [0, 1, 2].map(i => pos[i]) : [0.5, 0.5, 0.5],
       sliceType: nv.opts?.sliceType ?? 0,
       colormap: vol?.colormap ?? null,
       cal_min: vol?.cal_min ?? null,
@@ -149,15 +167,26 @@
 
   function applyDiff(diff) {
     const nv = state.nv
-    if (diff.crosshairPos) { nv.scene.crosshairPos = new Float32Array(diff.crosshairPos); nv.drawScene?.() }
+    // an empty or partial crosshair blanks every slice, so ignore it
+    if (diff.crosshairPos?.length === 3 && diff.crosshairPos.every(Number.isFinite)) {
+      nv.scene.crosshairPos = new Float32Array(diff.crosshairPos)
+      nv.drawScene?.()
+      // so other boostlets see the move
+      nv.createOnLocationChange?.()
+    }
     if (diff.sliceType !== undefined && nv.opts.sliceType !== diff.sliceType) nv.setSliceType?.(diff.sliceType)
     const vol = nv.volumes?.[0]
-    if (!vol) return
-    let dirty = false
-    if (diff.colormap && diff.colormap !== vol.colormap) { nv.setColormap?.(vol.id, diff.colormap); dirty = true }
-    if (diff.cal_min != null) { vol.cal_min = diff.cal_min; dirty = true }
-    if (diff.cal_max != null) { vol.cal_max = diff.cal_max; dirty = true }
-    if (dirty) nv.updateGLVolume?.()
+    if (vol) {
+      let dirty = false
+      if (diff.colormap && diff.colormap !== vol.colormap) { nv.setColormap?.(vol.id, diff.colormap); dirty = true }
+      if (diff.cal_min != null) { vol.cal_min = diff.cal_min; dirty = true }
+      if (diff.cal_max != null) { vol.cal_max = diff.cal_max; dirty = true }
+      if (dirty) nv.updateGLVolume?.()
+    }
+    // mark what we just applied as already seen so the broadcast loop
+    // doesnt send it straight back to the peer (that echo caused the shaking)
+    const cur = readScene(false)
+    for (const k of Object.keys(diff)) if (k in cur) state.last[k] = cur[k]
   }
 
   function isDropboxUrl(url) {
@@ -219,14 +248,22 @@
   async function publishScene(code, scene) {
     const sceneUrl = await dropboxUpload(`/scenes/${code}_${Date.now()}.json`, new TextEncoder().encode(JSON.stringify(scene)))
     if (!sceneUrl) return
-    await fetch(`${PUSHER_AUTH_URL}/scene`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, sceneUrl })
-    }).catch(() => {})
+    // the worker hands back a token on first publish, only that token can update the room
+    try {
+      const res = await fetch(`${PUSHER_AUTH_URL}/scene`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, sceneUrl, token: state.sceneToken })
+      })
+      const data = await res.json()
+      if (data.token) state.sceneToken = data.token
+    } catch (e) {}
   }
 
-  function makeCode() { return Math.random().toString(36).slice(2, 7) }
+  // 10 chars from a crypto source so room codes cant be guessed
+  function makeCode() {
+    return Array.from(crypto.getRandomValues(new Uint8Array(10)), b => (b % 36).toString(36)).join('')
+  }
 
   // ===== dropbox =====
 
@@ -409,11 +446,10 @@
   }
 
   function startBroadcasting() {
-    let last = {}
+    const last = state.last
     let lastCrosshairBroadcast = 0
     const tick = () => {
       state.rafId = requestAnimationFrame(tick)
-      if (state.applyingRemote) return
       const cur = readScene(false)
       const now = Date.now()
       const patch = {}
@@ -498,12 +534,12 @@
         hashVolume().then(localHash => {
           const match = localHash === msg.hash || (!localHash && !msg.hash)
           try { channel.send(JSON.stringify({ type: 'hash-ack', match })) } catch (e) {}
-          Boostlet.hint(match ? 'peer connected' : 'volumes differ — use dropbox to share', match ? 2000 : 6000)
+          Boostlet.hint(match ? 'peer connected' : 'volumes differ, use dropbox to share', match ? 2000 : 6000)
         })
         return
       }
       if (msg.type === 'hash-ack') {
-        Boostlet.hint(msg.match ? 'peer connected' : 'volumes differ — use dropbox to share', msg.match ? 2000 : 6000)
+        Boostlet.hint(msg.match ? 'peer connected' : 'volumes differ, use dropbox to share', msg.match ? 2000 : 6000)
         return
       }
       if (msg.type === 'latency-ping') {
@@ -516,16 +552,14 @@
         return
       }
       if (msg.type === 'scene-patch') {
-        state.applyingRemote = true
         applyDiff(msg.patch)
-        setTimeout(() => { state.applyingRemote = false }, 0)
         return
       }
       if (msg.type === 'volume-ready' && msg.volumeUrl) {
         // always load the dropbox volume regardless of whether a volume is already present
         Boostlet.hint('loading volume from dropbox', 3000)
         state.nv.loadVolumes([{ url: msg.volumeUrl }]).then(() => {
-          if (msg.scene) { state.applyingRemote = true; applyDiff(msg.scene); setTimeout(() => { state.applyingRemote = false }, 0) }
+          if (msg.scene) applyDiff(msg.scene)
         }).catch(() => Boostlet.hint('could not load volume from dropbox', 4000))
         return
       }
@@ -583,8 +617,8 @@
     close.onclick = () => panel.remove()
     const status = el('div', 'font-size:11px;color:#666', 'starting...')
     status.id = '__sync_status'
-    const input = el('input', 'background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:4px 6px;font-family:monospace;font-size:12px;width:70px;outline:none')
-    input.placeholder = 'xxxxx'; input.maxLength = 8
+    const input = el('input', 'background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:4px 6px;font-family:monospace;font-size:12px;width:100px;outline:none')
+    input.placeholder = 'room code'; input.maxLength = 10
     const joinBtn = el('button', `${BTN};background:#1a3a6a;color:#fff`, 'join')
     joinBtn.onclick = () => {
       const code = input.value.trim().toLowerCase()
@@ -638,8 +672,14 @@
 
   // ===== utils =====
 
+  // query params count too (minus sync) since single page viewers like slicedrop
+  // keep what is loaded in the query string, not the path
   function isSamePage(a, b) {
-    try { const ua = new URL(a), ub = new URL(b); return ua.origin + ua.pathname === ub.origin + ub.pathname } catch { return false }
+    try {
+      const ua = new URL(a), ub = new URL(b)
+      for (const u of [ua, ub]) { u.searchParams.delete('sync'); u.searchParams.sort() }
+      return ua.origin + ua.pathname + ua.search === ub.origin + ub.pathname + ub.search
+    } catch { return false }
   }
 
 })() //
