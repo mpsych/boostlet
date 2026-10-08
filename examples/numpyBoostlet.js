@@ -318,9 +318,14 @@ function plot() {
 // Boostlet.from_np(arr) write ndarray back and rerender
 // np                    numpyts
 
+// numpyts arrays live in wasm memory and are not garbage collected
+// dispose them after from_np or memory fills up after a few runs
+
 // example 1 scale
 const arr = Boostlet.to_np()
-Boostlet.from_np(np.multiply(arr, 2.0))
+const out = np.multiply(arr, 2.0)
+Boostlet.from_np(out)
+for (const x of [arr, out]) x.dispose?.()
 
 // example 2 threshold in display space
 // const vol = Boostlet.nv.volumes[0]
@@ -331,8 +336,10 @@ Boostlet.from_np(np.multiply(arr, 2.0))
 // const rawZero = Math.round((0 - inter) / slope)
 // const arr = Boostlet.to_np()
 // const mask = np.greater(arr, rawThresh)
-// const out = np.add(np.multiply(np.subtract(arr, rawZero), mask), rawZero)
-// Boostlet.from_np(out)`,
+// const a = np.subtract(arr, rawZero), b = np.multiply(a, mask)
+// const out = np.add(b, rawZero)
+// Boostlet.from_np(out)
+// for (const x of [arr, mask, a, b, out]) x.dispose?.()`,
     -1
   );
   window._numpyEditor = editor;
