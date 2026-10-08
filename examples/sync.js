@@ -146,8 +146,11 @@
   function readScene(full) {
     const nv = state.nv
     const vol = nv.volumes?.[0]
+    // index explicitly, after loadDocument crosshairPos is a plain object
+    // like {0: .5, 1: .5, 2: .5} and Array.from would turn it into []
+    const pos = nv.scene?.crosshairPos
     const snap = {
-      crosshairPos: nv.scene ? Array.from(nv.scene.crosshairPos) : [0.5, 0.5, 0.5],
+      crosshairPos: pos ? [0, 1, 2].map(i => pos[i]) : [0.5, 0.5, 0.5],
       sliceType: nv.opts?.sliceType ?? 0,
       colormap: vol?.colormap ?? null,
       cal_min: vol?.cal_min ?? null,
@@ -164,7 +167,8 @@
 
   function applyDiff(diff) {
     const nv = state.nv
-    if (diff.crosshairPos) {
+    // an empty or partial crosshair blanks every slice, so ignore it
+    if (diff.crosshairPos?.length === 3 && diff.crosshairPos.every(Number.isFinite)) {
       nv.scene.crosshairPos = new Float32Array(diff.crosshairPos)
       nv.drawScene?.()
       // so other boostlets see the move
