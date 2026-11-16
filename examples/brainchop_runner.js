@@ -95,6 +95,7 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
           return result;
         }
         async function createLabeledCounts(uniqueValuesAndCounts, labelStrings) {
+          let missingLabelStatus = '';
           if (uniqueValuesAndCounts.length !== labelStrings.length) {
             missingLabelStatus = "Failed to Predict Labels - "
             console.error(

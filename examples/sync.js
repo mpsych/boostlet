@@ -21,6 +21,9 @@
     dropboxToken: null, roomCode: null, sceneToken: null
   }
 
+  // time of the last failed send warning so hints dont pile up
+  let lastSendWarning = 0
+
   // ===== latency measurement state =====
 
   const _pendingPings = new Map() // id -> callback(rtt)
@@ -154,7 +157,9 @@
       sliceType: nv.opts?.sliceType ?? 0,
       colormap: vol?.colormap ?? null,
       cal_min: vol?.cal_min ?? null,
-      cal_max: vol?.cal_max ?? null
+      cal_max: vol?.cal_max ?? null,
+      // 3d camera as azimuth elevation zoom and the three clip plane values
+      camera: [nv.scene?.renderAzimuth, nv.scene?.renderElevation, nv.scene?.volScaleMultiplier, ...(nv.scene?.clipPlaneDepthAziElev || [])]
     }
     if (!full) return snap
     return {
@@ -175,6 +180,13 @@
       nv.createOnLocationChange?.()
     }
     if (diff.sliceType !== undefined && nv.opts.sliceType !== diff.sliceType) nv.setSliceType?.(diff.sliceType)
+    // a partial or broken camera is ignored like a broken crosshair
+    if (diff.camera?.length === 6 && diff.camera.every(Number.isFinite)) {
+      const [azimuth, elevation, zoom, ...clip] = diff.camera
+      nv.setRenderAzimuthElevation?.(azimuth, elevation)
+      nv.setScale?.(zoom)
+      nv.setClipPlane?.(clip)
+    }
     const vol = nv.volumes?.[0]
     if (vol) {
       let dirty = false
@@ -393,7 +405,8 @@
     d.setFloat32(108, 352, true)
     d.setFloat32(112, meta.scl_slope || 1, true)
     d.setFloat32(116, meta.scl_inter || 0, true)
-    d.setInt16(252, meta.qform_code || 1, true)
+    // only the sform rows are written below so the file must not claim a qform
+    d.setInt16(252, 0, true)
     d.setInt16(254, meta.sform_code || 1, true)
     if (meta.affine) {
       let k = 0
@@ -434,9 +447,11 @@
       else getPeer(m.id, false)
     })
     channel.bind('pusher:member_removed', m => removePeer(m.id))
-    channel.bind('client-offer', d => { if (d.to === state.selfId) handleOffer(d.from, d.payload) })
-    channel.bind('client-answer', d => { if (d.to === state.selfId) handleAnswer(d.from, d.payload) })
-    channel.bind('client-ice', d => { if (d.to === state.selfId) handleIce(d.from, d.payload) })
+    // pusher adds the real sender id on presence channels so a peer cant sign as someone else
+    const senderOf = (d, meta) => meta?.user_id || d.from
+    channel.bind('client-offer', (d, meta) => { if (d.to === state.selfId) handleOffer(senderOf(d, meta), d.payload) })
+    channel.bind('client-answer', (d, meta) => { if (d.to === state.selfId) handleAnswer(senderOf(d, meta), d.payload) })
+    channel.bind('client-ice', (d, meta) => { if (d.to === state.selfId) handleIce(senderOf(d, meta), d.payload) })
 
     startBroadcasting()
   }
@@ -448,6 +463,7 @@
   function startBroadcasting() {
     const last = state.last
     let lastCrosshairBroadcast = 0
+    let lastCameraBroadcast = 0
     const tick = () => {
       state.rafId = requestAnimationFrame(tick)
       const cur = readScene(false)
@@ -455,6 +471,8 @@
       const patch = {}
       const crosshairChanged = cur.crosshairPos && (!last.crosshairPos || cur.crosshairPos.some((v, i) => v !== last.crosshairPos[i]))
       if (crosshairChanged && now - lastCrosshairBroadcast >= 33) { patch.crosshairPos = cur.crosshairPos; last.crosshairPos = cur.crosshairPos; lastCrosshairBroadcast = now }
+      const cameraChanged = !last.camera || cur.camera.some((v, i) => v !== last.camera[i])
+      if (cameraChanged && now - lastCameraBroadcast >= 33) { patch.camera = cur.camera; last.camera = cur.camera; lastCameraBroadcast = now }
       if (cur.sliceType !== last.sliceType) { patch.sliceType = cur.sliceType; last.sliceType = cur.sliceType }
       if (cur.colormap !== last.colormap) { patch.colormap = cur.colormap; last.colormap = cur.colormap }
       if (cur.cal_min !== last.cal_min || cur.cal_max !== last.cal_max) { patch.cal_min = cur.cal_min; patch.cal_max = cur.cal_max; last.cal_min = cur.cal_min; last.cal_max = cur.cal_max }
@@ -524,6 +542,8 @@
     channel.onopen = async () => {
       const hash = await hashVolume()
       try { channel.send(JSON.stringify({ type: 'hash-hello', hash })) } catch (e) {}
+      // lets boostlets exchange their own state with the new peer
+      routeMessage({ type: 'sync-peer-open' }, peerId)
     }
 
     channel.onmessage = e => {
@@ -563,7 +583,9 @@
         }).catch(() => Boostlet.hint('could not load volume from dropbox', 4000))
         return
       }
-      routeMessage(msg)
+      // this name is only ever raised locally when a channel opens
+      if (msg.type === 'sync-peer-open') return
+      routeMessage(msg, peerId)
     }
 
     channel.onclose = () => { if (peer.channel === channel) peer.channel = null }
@@ -571,7 +593,16 @@
 
   function broadcast(msg) {
     const str = JSON.stringify(msg)
-    state.peers.forEach(peer => { if (peer.channel?.readyState === 'open') try { peer.channel.send(str) } catch (e) {} })
+    let failed = 0
+    state.peers.forEach(peer => {
+      if (peer.channel?.readyState !== 'open') { failed++; return }
+      try { peer.channel.send(str) } catch (e) { failed++ }
+    })
+    // viewer moves repeat many times a second so only boostlet messages warn
+    if (failed && msg.type !== 'scene-patch' && Date.now() - lastSendWarning > 3000) {
+      lastSendWarning = Date.now()
+      Boostlet.hint(`sync could not reach ${failed} of ${state.peers.size} peers`, 3000)
+    }
   }
 
   function removePeer(peerId) {
@@ -592,9 +623,10 @@
     if (idx !== -1) window.__boostlet_active[idx] = entry
     else window.__boostlet_active.push(entry)
   }
-  function routeMessage(msg) {
+  // peerId is the connection the message arrived on
+  function routeMessage(msg, peerId) {
     if (!msg?.type) return
-    for (const entry of window.__boostlet_active) if (typeof entry.onMessage === 'function') entry.onMessage(msg)
+    for (const entry of window.__boostlet_active) if (typeof entry.onMessage === 'function') entry.onMessage(msg, peerId)
   }
 
   // ===== ui =====

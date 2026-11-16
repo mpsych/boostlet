@@ -9,7 +9,8 @@ document.head.appendChild(script);
 eval(script);
 
 const API_url = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
-const API_TOKEN = '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'
+// token removed from the repo, set your own hugging face token here
+const API_TOKEN = ''
 
 async function run() {
 

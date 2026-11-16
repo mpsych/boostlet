@@ -32,7 +32,12 @@ export class Boostlet {
 
     if (this.framework) {
 
-      console.log('Found', this.framework.name, '!')
+      // plugins call init again and again while they wait for a viewer
+      // so only log when the detected framework changes
+      if (this.framework.name !== this.last_found) {
+        console.log('Found', this.framework.name, '!')
+        this.last_found = this.framework.name;
+      }
     
     } else {
 
@@ -112,6 +117,14 @@ export class Boostlet {
 
   get_dims() {
     return this.framework.get_dims();
+  }
+
+  /**
+   * Gets the plane the user is working in: 0 axial, 1 coronal, 2 sagittal.
+   * Pass the location event if there is one.
+   */
+  get_plane(loc) {
+    return this.framework.get_plane(loc);
   }
 
   get_subvolume(start, end) {

@@ -12,8 +12,10 @@ const CORS = {
 // 30 days
 const SCENE_TTL = 2592000
 
-// lowercase alphanumeric, 5 allows codes from older sync.js clients
-const CODE_RE = /^[a-z0-9]{5,32}$/
+// lowercase alphanumeric and at least 10 characters so a code cant be guessed
+const CODE_RE = /^[a-z0-9]{10,32}$/
+// the only channels this worker signs are sync rooms with a valid code
+const CHANNEL_RE = /^presence-boostlet-[a-z0-9]{10,32}$/
 
 export default {
   async fetch(request, env) {
@@ -44,6 +46,7 @@ export default {
 
     if (url.pathname.startsWith('/scene/') && request.method === 'GET') {
       const code = url.pathname.slice(7)
+      if (!CODE_RE.test(code)) return json({ error: 'bad code' }, 400)
       const entry = parseEntry(await env.BOOSTLET_SCENES.get(code))
       if (!entry) return json({ error: 'not found' }, 404)
       // never send the token back out
@@ -59,10 +62,14 @@ export default {
     const params = new URLSearchParams(body)
     const socket_id = params.get('socket_id')
     const channel_name = params.get('channel_name')
-    const user_id = params.get('user_id') || socket_id
+    // the id is always the socket id so a client cant pick another member's id
+    const user_id = socket_id
 
     if (!socket_id || !channel_name) {
       return new Response('missing fields', { status: 400, headers: CORS })
+    }
+    if (!CHANNEL_RE.test(channel_name)) {
+      return new Response('bad channel', { status: 403, headers: CORS })
     }
 
     // sign the exact channel_data string we send back so they always match

@@ -17,6 +17,12 @@ function run() {
     return;
   }
 
+  const meshes = Boostlet.framework.instance.meshes;
+  if (!meshes || !meshes.length) {
+    Boostlet.hint('Load a mesh or fiber tract first', 4000);
+    return;
+  }
+
   Boostlet.load_script("https://aframe.io/releases/1.3.0/aframe.min.js", function() {
 
     Boostlet.load_script("https://raw.githack.com/AR-js-org/AR.js/dev/aframe/build/aframe-ar.js", function() {
