@@ -78,7 +78,6 @@ export class Util {
 
       } else {
 
-        console.log("No framework detected, falling back to canvas rendering");
         framework = new CanvasFallback();
 
       }
