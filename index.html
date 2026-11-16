@@ -66,32 +66,40 @@
         color: white;
     }
 
-    .group {
-        font-size: 22px;
-        margin: 30px 0 4px 0;
+    .tip {
+        position: relative;
     }
 
-    .groupnote {
-        font-size: 15px;
-        color: #555;
-        margin: 0 0 14px 0;
+    .tip::after {
+        content: attr(data-tip);
+        position: absolute;
+        left: 100%;
+        top: 0;
+        margin-left: 10px;
+        width: 210px;
+        padding: 8px 10px;
+        background-color: #111;
+        color: white;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: normal;
+        line-height: 1.4;
+        text-align: left;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 2000;
     }
 
-    .entries {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px 24px;
-        margin-bottom: 20px;
+    .tip:hover::after {
+        opacity: 1;
     }
 
-    .entry p {
-        font-size: 14px;
-        color: #444;
-        margin: 6px 0 0 0;
-    }
-
-    .entry .needs {
-        color: #777;
+    /* the last button in a row opens its text to the left so it stays on the page */
+    .buttons .tip:last-child::after {
+        left: auto;
+        right: 100%;
+        margin-left: 0;
+        margin-right: 10px;
     }
 
     .logo {
@@ -194,10 +202,6 @@
 
     /* Responsive */
     @media (max-width: 600px) {
-        .entries {
-            grid-template-columns: 1fr;
-        }
-
         .header-content {
             flex-direction: column;
         }
@@ -300,85 +304,45 @@
 
       <!-- 2. Or select individual BOOSTLETs and drag them! -->
       <img src='gfx/1b.png' class='imgtext'>
+      <div class="buttons">
 
-      <h2 class='group'>Boostlet Reloaded</h2>
-      <p class='groupnote'>The four plugins from the Boostlet Reloaded paper. Open a page that runs NiiVue with a volume loaded, such as the OpenNeuro file viewer or Slice:Drop Reloaded, then click the bookmark. A short note appears while a plugin loads and tells you if it could not start.</p>
-      <div class="entries">
-        <div class="entry">
-          <a href='' id='PixelExplorer.js'><button class="button">Pixel Explorer</button></a>
-          <a href='' id='PixelExplorer.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Labeled 9&times;9 grid of the voxel values around the crosshair, in the plane you clicked. <span class="needs">Needs NiiVue.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='roiStats.js'><button class="button">ROI Stats</button></a>
-          <a href='' id='roiStats.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Mean, standard deviation, minimum, maximum and quartiles of the same 9&times;9 patch. <span class="needs">Needs NiiVue.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='numpyBoostlet.js'><button class="button">NumPy Editor</button></a>
-          <a href='' id='numpyBoostlet.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Code editor that reads and changes the volume with NumPy style JavaScript (numpy-ts), with one click undo. <span class="needs">Needs NiiVue.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='sync.js'><button class="button">Sync</button></a>
-          <a href='' id='sync.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Links several viewers in real time: crosshair, view, colormap, windowing and the shared NumPy editor. Anyone with the room code can join, so only share it with people you trust. <span class="needs">Needs NiiVue.</span></p>
-        </div>
+        <div class='tip' data-tip="Edge filter on the rendered image. Click the result to restore the viewer. Works with any supported viewer."><a href='' id='sobel.js'><button class="button">Sobel Filter</button></a><br><div style='margin:2px'><a href='' id='sobel.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Captions the current slice with a hosted model. Not maintained: the hosting service no longer responds."><a href='' id='imageCaptioning.js'><button class="button">Image Captioning </button></a><br><div style='margin:2px'><a href='' id='imageCaptioning.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Histogram of the pixels on screen. Works with any supported viewer."><a href='' id='plotly.js'><button class="button">Plotly Histogram</button></a><br><div style='margin:2px'><a href='' id='plotly.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
       </div>
+      <div class="buttons">
 
-      <h2 class='group'>Original examples (2025)</h2>
-      <p class='groupnote'>From the first Boostlet paper. These are not maintained. The grey text under each one says what it needs.</p>
-      <div class="entries">
-        <div class="entry">
-          <a href='' id='sobel.js'><button class="button">Sobel Filter</button></a>
-          <a href='' id='sobel.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Edge filter on the rendered image. Click the result to restore the viewer. <span class="needs">Any supported viewer.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='plotly.js'><button class="button">Plotly Histogram</button></a>
-          <a href='' id='plotly.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Histogram of the pixels currently on screen. <span class="needs">Any supported viewer.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='brainchop.js'><button class="button">Brainchop</button></a>
-          <a href='' id='brainchop.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Brain tissue segmentation that runs in the browser. <span class="needs">Needs NiiVue.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='meshAR.js'><button class="button">Mesh AR</button></a>
-          <a href='' id='meshAR.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Shows the loaded surface mesh in augmented reality. <span class="needs">Needs NiiVue with a mesh loaded, a webcam and a Hiro marker.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='fibersAR.js'><button class="button">Fibers AR</button></a>
-          <a href='' id='fibersAR.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Shows the loaded fiber tract in augmented reality. <span class="needs">Needs NiiVue with a tract loaded, a webcam and a Hiro marker.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='webllm.js'><button class="button">LLM Chat</button></a>
-          <a href='' id='webllm.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Chat with a language model that runs in your browser. The panel can take half a minute to appear. <span class="needs">Needs WebGPU. Does not use the viewer.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='melanoma.js'><button class="button">Melanoma Predictor</button></a>
-          <a href='' id='melanoma.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Drop a skin photo to classify it. <span class="needs">Does not use the viewer.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='trako.js'><button class="button">Trako</button></a>
-          <a href='' id='trako.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Loads compressed fiber tracts (.tko). <span class="needs">Currently not working on OpenNeuro or Slice:Drop Reloaded.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='CatVSDog.js'><button class="button">CatVSDog</button></a>
-          <a href='' id='CatVSDog.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Classifies a 2D photo loaded in NiiVue. <span class="needs">Does not work on medical volumes.</span></p>
-        </div>
-        <div class="entry">
-          <a href='' id='imageCaptioning.js'><button class="button">Image Captioning</button></a>
-          <a href='' id='imageCaptioning.js-code' target='_blank'><img src='gfx/badge.svg'></a>
-          <p>Captions the current slice with a hosted model. <span class="needs">The hosting service no longer responds.</span></p>
-        </div>
+        <div class='tip' data-tip="Loads compressed fiber tracts (.tko). Not maintained: currently not working."><a href='' id='trako.js'><button class="button">Trako (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='trako.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Brain tissue segmentation that runs in the browser. Needs NiiVue."><a href='' id='brainchop.js'><button class="button">Brainchop</button></a><br><div style='margin:2px'><a href='' id='brainchop.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Chat with a language model that runs in your browser. Needs WebGPU and can take half a minute to appear."><a href='' id='webllm.js'><button class="button">LLM Chat</button></a><br><div style='margin:2px'><a href='' id='webllm.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Drop a skin photo to classify it. Does not use the viewer."><a href='' id='melanoma.js'><button class="button">Melanoma Predictor</button></a><br><div style='margin:2px'><a href='' id='melanoma.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+      </div>
+      <div class="buttons">
+
+        <div class='tip' data-tip="Shows the loaded surface mesh in augmented reality. Needs NiiVue with a mesh loaded and a webcam."><a href='' id='meshAR.js'><button class="button">Mesh AR</button></a><br><div style='margin:2px'><a href='' id='meshAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Classifies a 2D photo loaded in NiiVue. Does not work on medical volumes."><a href='' id='CatVSDog.js'><button class="button">CatVSDog</button></a><br><div style='margin:2px'><a href='' id='CatVSDog.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Shows the loaded fiber tract in augmented reality. Needs NiiVue with a tract loaded and a webcam."><a href='' id='fibersAR.js'><button class="button">Fibers AR</button></a><br><div style='margin:2px'><a href='' id='fibersAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+      </div>
+      <div class="buttons">
+
+        <div class='tip' data-tip="Labeled 9x9 grid of the voxel values around the crosshair, in the plane you clicked."><a href='' id='PixelExplorer.js'><button class="button">Pixel Explorer (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='PixelExplorer.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Mean, standard deviation, minimum, maximum and quartiles of the 9x9 patch around the crosshair."><a href='' id='roiStats.js'><button class="button">ROI Stats (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='roiStats.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Code editor that reads and changes the volume with NumPy style JavaScript, with one click undo."><a href='' id='numpyBoostlet.js'><button class="button">NumPy Editor (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='numpyBoostlet.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
+        <div class='tip' data-tip="Links viewers in real time: crosshair, view, 3D camera and the NumPy editor. Anyone with the room code can join."><a href='' id='sync.js'><button class="button">Sync (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='sync.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+
       </div>
 
       <img src='gfx/2.png' class='imgtext'>
