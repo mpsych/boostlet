@@ -35,6 +35,12 @@ export class Framework {
 
   }
 
+  get_plane(loc) {
+
+    throw "Missing Implementation.";
+
+  }
+
   convert_to_png(uint8array, width, height) {
 
     return Util.convert_to_png(uint8array, width, height, this.flip_on_png);

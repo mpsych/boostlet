@@ -114,6 +114,14 @@ export class Boostlet {
     return this.framework.get_dims();
   }
 
+  /**
+   * Gets the plane the user is working in: 0 axial, 1 coronal, 2 sagittal.
+   * Pass the location event if there is one.
+   */
+  get_plane(loc) {
+    return this.framework.get_plane(loc);
+  }
+
   get_subvolume(start, end) {
     return this.framework.get_subvolume(start, end);
   }

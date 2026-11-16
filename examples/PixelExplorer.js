@@ -5,34 +5,32 @@ window._PixelExplorerLoaded = true;
 
 (function() {
 
-const script = document.createElement("script");
-script.type = "text/javascript";
-script.src = "https://boostlet.org/dist/boostlet.min.js";
-script.onload = function() {
-  /// wait for nv and volumes before calling init
-  // calling init too early means niivue won't be detected yet
-  var poll = setInterval(function() {
-    try {
-      Boostlet.init();
-      clearInterval(poll);
-      run();
-    } catch(e) {
-      // framework not ready yet keep polling
-    }
-  }, 300);
-};
-document.head.appendChild(script);
-
 const HALF = 4;
 
-function run() {
-  if (Boostlet.framework.name !== 'niivue') {
-    alert('Only niivue is supported right now :(');
-    return;
-  }
+// load boostlet once then wait for niivue with a loaded volume
+if (window.Boostlet) {
+  waitForViewer();
+} else {
+  const script = document.createElement("script");
+  script.src = "https://boostlet.org/dist/boostlet.min.js";
+  script.onload = waitForViewer;
+  document.head.appendChild(script);
+}
 
-  const nv = Boostlet.framework.instance;
-  setup(nv);
+function waitForViewer() {
+  let tries = 0;
+  const poll = setInterval(function() {
+    try { Boostlet.init(); } catch(e) {}
+    const fw = Boostlet.framework;
+    const ready = fw && fw.name === 'niivue' && fw.instance.volumes && fw.instance.volumes.length;
+    if (!ready && ++tries <= 40) return;
+    clearInterval(poll);
+    if (ready) return setup(fw.instance);
+    // init falls back to a plain canvas so no niivue after 12 seconds means there is none
+    // clearing the flag lets the bookmark be clicked again
+    delete window._PixelExplorerLoaded;
+    Boostlet.hint('PixelExplorer found no NiiVue viewer with a loaded volume', 5000);
+  }, 300);
 }
 
 function setup(nv) {
@@ -54,16 +52,26 @@ function setup(nv) {
     const start = [v[0] - HALF, v[1] - HALF, v[2] - HALF];
     const end   = [v[0] + HALF, v[1] + HALF, v[2] + HALF];
 
-    // collapse the axis perpendicular to the current slice to a single voxel
-    // 2 = sagittal (x axis), 1 = coronal (y axis), default axial (z axis)
-    const fixedAxis = nv.opts.sliceType === 2 ? 0
-                    : nv.opts.sliceType === 1  ? 1 : 2;
-    start[fixedAxis] = end[fixedAxis] = Math.round((start[fixedAxis] + end[fixedAxis]) / 2);
+    // boostlet knows the plane as 0 axial 1 coronal 2 sagittal
+    // in multiplanar that is the panel which was clicked last
+    // a boostlet build from before get_plane only knows single plane views
+    const view = nv.opts.sliceType;
+    const plane = Boostlet.get_plane ? Boostlet.get_plane(loc) : (view === 1 || view === 2) ? view : 0;
+
+    // collapse the axis perpendicular to that plane to a single voxel
+    // axial holds z and coronal holds y and sagittal holds x
+    const fixedAxis = 2 - plane;
+    start[fixedAxis] = end[fixedAxis] = v[fixedAxis];
 
     const { data, dims } = Boostlet.get_subvolume(start, end);
     if (data && dims) {
+      // the two axes that lie in the plane, first is drawn across and second up
+      const [ax, ay] = [0, 1, 2].filter(a => a !== fixedAxis);
+      // at a volume edge the block comes back clipped
+      // a negative start tells how many cells are missing on the low side
+      const skip = [Math.max(0, -start[ax]), Math.max(0, -start[ay])];
       const mc = document.getElementById('PixelExplorerCanvas');
-      if (mc) drawMatrix(data, dims, mc);
+      if (mc) drawMatrix(data, dims[ax], dims[ay], skip, mc);
     }
   };
 
@@ -82,7 +90,9 @@ function setup(nv) {
 }
 
 // render voxel values as a labeled grayscale grid
-function drawMatrix(data, dims, mc) {
+// the grid is always 9 by 9 with the crosshair voxel in the middle
+// cells that fall outside the volume stay dark and unlabeled
+function drawMatrix(data, cols, rows, skip, mc) {
   const nv = Boostlet.framework.instance;
   const { cal_min, cal_max } = nv.volumes[0];
   const range = cal_max - cal_min || 1;
@@ -94,37 +104,34 @@ function drawMatrix(data, dims, mc) {
   const slope = nv.volumes[0].hdr.scl_slope || 1;
   const inter = nv.volumes[0].hdr.scl_inter || 0;
 
-  // getVolumeData returns dims as X Y Z and the collapsed axis has size 1
-  // the first non-1 dim is cols, second is rows
-  const [cols, rows] = dims.filter(d => d > 1);
-  if (!cols || !rows) return;
+  const N = HALF * 2 + 1;
+  const cell = Math.floor(mc.width / N);
 
-  const cell = Math.floor(Math.min(mc.width / cols, mc.height / rows));
-  if (cell < 1) return;
+  // narrow intensity ranges need decimals or every label reads 0 or 1
+  const decimals = range >= 100 ? 0 : range >= 10 ? 1 : 2;
 
-  const showLabels = cell >= 8;
-  if (showLabels) {
-    ctx.font = `${Math.max(Math.floor(cell * 0.28), 6)}px monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-  }
+  ctx.font = `${Math.max(Math.floor(cell * 0.28), 6)}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-  ctx.clearRect(0, 0, mc.width, mc.height);
+  ctx.fillStyle = '#301818';
+  ctx.fillRect(0, 0, mc.width, mc.height);
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const raw = data[c + (rows - 1 - r) * cols];
-      const val = raw * slope + inter;
+      const val = data[c + r * cols] * slope + inter;
       const norm = (val - cal_min) / range;
       const g = Math.round(norm * 255);
 
-      ctx.fillStyle = `rgb(${g},${g},${g})`;
-      ctx.fillRect(c * cell, r * cell, cell, cell);
+      // row 0 of the data is the bottom of the grid
+      const x = (c + skip[0]) * cell;
+      const y = (N - 1 - (r + skip[1])) * cell;
 
-      if (showLabels) {
-        ctx.fillStyle = norm > 0.55 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
-        ctx.fillText(val.toFixed(0), c * cell + cell / 2, r * cell + cell / 2);
-      }
+      ctx.fillStyle = `rgb(${g},${g},${g})`;
+      ctx.fillRect(x, y, cell, cell);
+
+      ctx.fillStyle = norm > 0.55 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
+      ctx.fillText(val.toFixed(decimals), x + cell / 2, y + cell / 2);
     }
   }
 }
