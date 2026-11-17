@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Boostlet figure viewer</title>
+  <script src="js/niivue.umd.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; }
+    #viewer { width: 100%; height: 100%; display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="viewer"></canvas>
+  <script>
+    // clean niivue page for paper screenshots, no extra panels
+    // load a file with ?data=path/to/file.nii.gz (defaults to sub-003)
+    const params = new URLSearchParams(window.location.search)
+    const url = params.get('data') || 'data/sub-003_ses-1_T1w.nii.gz'
+
+    window.nv = new niivue.Niivue({ backColor: [0, 0, 0, 1] })
+    nv.attachToCanvas(document.getElementById('viewer'))
+    nv.setSliceType(nv.sliceTypeAxial)
+    Promise.resolve(nv.loadVolumes([{ url: url, colorMap: 'gray' }]))
+      .then(() => console.log('loaded', url))
+      .catch(e => console.error('load failed', url, e))
+  </script>
+</body>
+</html>
