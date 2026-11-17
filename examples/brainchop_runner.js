@@ -33,8 +33,9 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
           await Boostlet.framework.instance.removeVolume(Boostlet.framework.instance.volumes[1]);
         }
       }
-      async function callbackUI() {
-        // do nothing
+      // brainchop sends a modal message when inference fails so show it
+      async function callbackUI(message, progressFrac, modalMessage) {
+        if (modalMessage) Boostlet.hint('Brainchop: ' + modalMessage, 6000);
       }
       async function callbackImg(img, opts, modelEntry) {
           closeAllOverlays();
@@ -67,6 +68,7 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
           }
           overlayVolume.opacity = 0.7;
           await Boostlet.framework.instance.addVolume(overlayVolume);
+          Boostlet.hint('Brainchop done', 3000);
         }
         async function fetchJSON(fnm) {
           const response = await fetch(fnm);
@@ -184,5 +186,7 @@ import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runI
       console.log("Inference environment ready");
     });
   });
+}).catch(function(e) {
+  Boostlet.hint('Brainchop could not load: ' + e.message, 5000);
 });
 

@@ -25,7 +25,11 @@ function waitForViewer() {
     const ready = fw && fw.name === 'niivue' && fw.instance.volumes && fw.instance.volumes.length;
     if (!ready && ++tries <= 40) return;
     clearInterval(poll);
-    if (ready) return setup(fw.instance);
+    if (ready) {
+      setup(fw.instance);
+      Boostlet.hint('PixelExplorer loaded', 2500);
+      return;
+    }
     // init falls back to a plain canvas so no niivue after 12 seconds means there is none
     // clearing the flag lets the bookmark be clicked again
     delete window._PixelExplorerLoaded;

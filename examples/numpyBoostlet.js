@@ -136,7 +136,15 @@ function waitForViewer() {
     const ready = fw && fw.name === 'niivue' && fw.instance.volumes && fw.instance.volumes.length;
     if (!ready && ++tries <= 40) return;
     clearInterval(poll);
-    if (ready) return setup();
+    if (ready) {
+      // numpy-ts and the editor take a few seconds so say something right away
+      Boostlet.hint('NumPy Boostlet loading', 2000);
+      setup().catch(() => {
+        delete window._NumpyBoostletLoaded;
+        Boostlet.hint('NumPy Boostlet could not load numpy-ts', 5000);
+      });
+      return;
+    }
     // init falls back to a plain canvas so no niivue after 12 seconds means there is none
     // clearing the flag lets the bookmark be clicked again
     delete window._NumpyBoostletLoaded;
@@ -178,8 +186,13 @@ async function setup() {
   // load ace then build the editor panel
   const aceScript = document.createElement('script');
   aceScript.src = ACE_URL;
+  aceScript.onerror = function() {
+    delete window._NumpyBoostletLoaded;
+    Boostlet.hint('NumPy Boostlet could not load the editor', 5000);
+  };
   aceScript.onload = function() {
     plot();
+    Boostlet.hint('NumPy Boostlet loaded', 2500);
 
     // ===== benchmark =====
     // Measure wall time for core operations over the loaded volume.

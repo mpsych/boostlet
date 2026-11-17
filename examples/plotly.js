@@ -5,18 +5,24 @@ script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
 
 script.onload = run;
+script.onerror = function() { alert('Plotly could not load Boostlet'); };
 document.head.appendChild(script);
 eval(script);
 
 function run() {
   
-  // detect visualization framework
-  Boostlet.init();
+  try {
+    // detect visualization framework
+    Boostlet.init();
 
-  all_pixels = Boostlet.get_image().data;
+    all_pixels = Boostlet.get_image().data;
 
-  // load Plotly.js library and start plotting in the onload callback
-  Boostlet.load_script('https://cdn.plot.ly/plotly-2.25.2.min.js', plot);
+    // load Plotly.js library and start plotting in the onload callback
+    Boostlet.hint('Plotly loading', 2000);
+    Boostlet.load_script('https://cdn.plot.ly/plotly-2.25.2.min.js', plot);
+  } catch (e) {
+    Boostlet.hint('Plotly failed: ' + e.message, 5000);
+  }
 
 }
 
@@ -40,5 +46,7 @@ function plot() {
     x: all_pixels,
     type: 'histogram'
   }]);
+
+  Boostlet.hint('Plotly loaded, click the plot to close it', 3000);
 
 }

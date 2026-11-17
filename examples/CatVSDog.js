@@ -3,6 +3,7 @@ script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
 script.onload = run;
+script.onerror = function() { alert('CatVSDog could not load Boostlet'); };
 document.head.appendChild(script);
 eval(script);
 
@@ -13,8 +14,19 @@ function run() {
   // detect visualization framework
   Boostlet.init();
 
+  if (Boostlet.framework.name != 'niivue') {
+    Boostlet.hint('CatVSDog found no NiiVue viewer', 5000);
+    return;
+  }
+
+  // use the detected viewer since pages name it differently
+  const nv = Boostlet.framework.instance;
+
   // load TF.js
+  Boostlet.hint('CatVSDog loading', 2000);
   Boostlet.load_script('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js', async function() {
+
+	  try {
 
 	  // TF available
 	  model = await tf.loadLayersModel("https://fly.cs.umb.edu/data/X/catdog/model.json");
@@ -63,6 +75,10 @@ function run() {
 
 
 	  console.log(prediction);
+
+	  } catch (e) {
+	    Boostlet.hint('CatVSDog failed, it needs a 2D photo: ' + e.message, 5000);
+	  }
 
   });
 

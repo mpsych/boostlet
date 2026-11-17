@@ -5,6 +5,7 @@ script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
 
 script.onload = run;
+script.onerror = function() { alert('Image Captioning could not load Boostlet'); };
 document.head.appendChild(script);
 eval(script);
 
@@ -17,12 +18,22 @@ async function run() {
   // detect visualization framework
   Boostlet.init();
 
-  const requestData = await request();
-  console.log(requestData);
+  if (!API_TOKEN) {
+    Boostlet.hint('Image Captioning needs a Hugging Face token set in the script', 5000);
+    return;
+  }
 
-  requestDataText = requestData[0]['generated_text']
-  // display the image captioning text
-  displayText(requestDataText);
+  try {
+    Boostlet.hint('Image Captioning sending the slice', 2000);
+    const requestData = await request();
+    console.log(requestData);
+
+    requestDataText = requestData[0]['generated_text']
+    // display the image captioning text
+    displayText(requestDataText);
+  } catch (e) {
+    Boostlet.hint('Image Captioning failed: ' + e.message, 5000);
+  }
 
 }
 

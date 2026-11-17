@@ -19,6 +19,7 @@ script.onload = function() {
   boostletLoaded = true;
   tryRun();
 }
+script.onerror = function() { alert('Melanoma could not load Boostlet'); };
 document.head.appendChild(script);
 
 
@@ -29,6 +30,7 @@ tfscript.onload = function() {
   tfscriptLoaded = true;
   tryRun();
 }
+tfscript.onerror = function() { alert('Melanoma could not load TensorFlow.js'); };
 document.head.appendChild(tfscript);
 
 
@@ -38,6 +40,7 @@ async function run() {
   Boostlet.init();
 
   getImage();
+  Boostlet.hint('Melanoma loaded, drop a skin image on the box', 3000);
 
 
 }
@@ -46,9 +49,16 @@ async function run() {
 // Deep Learning
 async function predict(file) {
   // Load model
-  const model = await tf.loadLayersModel(
-    "https://raw.githubusercontent.com/mpsych/melanoma/main/weights/model.json"
-  );
+  Boostlet.hint('Melanoma checking the image', 2000);
+  let model;
+  try {
+    model = await tf.loadLayersModel(
+      "https://raw.githubusercontent.com/mpsych/melanoma/main/weights/model.json"
+    );
+  } catch (e) {
+    Boostlet.hint('Melanoma could not load its model: ' + e.message, 5000);
+    return;
+  }
 
   // Get the image
   const img = new Image();

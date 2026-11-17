@@ -2,6 +2,7 @@ script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
 script.onload = run;
+script.onerror = function() { alert('Mesh AR could not load Boostlet'); };
 document.head.appendChild(script);
 eval(script);
 
@@ -13,7 +14,7 @@ function run() {
   Boostlet.init();
 
   if (Boostlet.framework.name != 'niivue') {
-    alert('Only niivue is supported right now :(');
+    Boostlet.hint('Mesh AR found no NiiVue viewer', 5000);
     return;
   }
 
@@ -23,9 +24,12 @@ function run() {
     return;
   }
 
+  Boostlet.hint('Mesh AR loading', 2000);
   Boostlet.load_script("https://aframe.io/releases/1.3.0/aframe.min.js", function() {
 
     Boostlet.load_script("https://raw.githack.com/AR-js-org/AR.js/dev/aframe/build/aframe-ar.js", function() {
+
+      Boostlet.hint('Mesh AR loaded, allow the webcam and show it the Hiro marker', 5000);
 
       const scene = document.createElement('a-scene');
       scene.setAttribute('embedded', '');

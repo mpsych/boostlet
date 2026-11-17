@@ -7,6 +7,7 @@ script.type = "text/javascript";
 script.src = "https://gaiborjosue.github.io/boostlet/dist/boostlet.min.js";
 
 script.onload = run;
+script.onerror = function() { alert('LLM Chat could not load Boostlet'); };
 document.head.appendChild(script);
 eval(script);
 
@@ -19,13 +20,22 @@ async function run() {
   script.src = "https://mpsych.github.io/cdn/web-llm/web-llm-cdn.js";
   document.head.appendChild(script);
 
+  // the chat library is large so the panel can take half a minute
+  Boostlet.hint('LLM Chat loading, this can take 30 seconds', 5000);
+  script.onerror = () => Boostlet.hint('LLM Chat could not load its library', 5000);
+
   script.onload = async () => {
-    // Import the module
-    const module = await import(script.src);
-    window.webllm = module;
-    const chatUI = new ChatUI();
-    chatUI.setupChatUI();
-    chatUI.populateModelSelector();
+    try {
+      // Import the module
+      const module = await import(script.src);
+      window.webllm = module;
+      const chatUI = new ChatUI();
+      chatUI.setupChatUI();
+      chatUI.populateModelSelector();
+      Boostlet.hint('LLM Chat loaded, pick a model to start', 3000);
+    } catch (e) {
+      Boostlet.hint('LLM Chat failed: ' + e.message, 5000);
+    }
   };
 }
 

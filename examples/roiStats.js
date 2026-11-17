@@ -28,7 +28,16 @@ function waitForViewer() {
     const ready = fw && fw.name === 'niivue' && fw.instance.volumes && fw.instance.volumes.length;
     if (!ready && ++tries <= 40) return;
     clearInterval(poll);
-    if (ready) return setup(fw.instance);
+    if (ready) {
+      // setup waits on numpy-ts so say loaded only once it is in
+      setup(fw.instance)
+        .then(() => Boostlet.hint('ROI Stats loaded', 2500))
+        .catch(() => {
+          delete window._RoiStatsLoaded;
+          Boostlet.hint('ROI Stats could not load numpy-ts', 5000);
+        });
+      return;
+    }
     // init falls back to a plain canvas so no niivue after 12 seconds means there is none
     // clearing the flag lets the bookmark be clicked again
     delete window._RoiStatsLoaded;

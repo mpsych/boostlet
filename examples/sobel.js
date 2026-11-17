@@ -2,12 +2,23 @@ script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
 script.onload = run;
+script.onerror = function() { alert('Sobel could not load Boostlet'); };
 document.head.appendChild(script);
 eval(script);
 
 CATEGORY = "Filter"
 
+// say whether the filter ran or why it did not
 function run() {
+  try {
+    apply();
+    Boostlet.hint('Sobel applied', 2500);
+  } catch (e) {
+    Boostlet.hint('Sobel failed: ' + e.message, 5000);
+  }
+}
+
+function apply() {
   
   // detect visualization framework
   Boostlet.init();

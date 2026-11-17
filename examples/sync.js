@@ -114,22 +114,30 @@
   if (window.Boostlet) waitForNv()
   else loadScript(BOOSTLET_URL, waitForNv)
 
+  // give up after 12 seconds like the other boostlets so a page without niivue says so
   function waitForNv() {
+    let tries = 0
     state.pollId = setInterval(() => {
+      let nv = null
       try {
         Boostlet.init()
-        if (Boostlet.framework.name !== 'niivue') return
-        const nv = Boostlet.framework.instance
-        if (!nv?.volumes) return
-        clearInterval(state.pollId); state.pollId = null
-        if (window.Pusher) start(nv)
-        else loadScript('https://js.pusher.com/8.4.0/pusher.min.js', () => start(nv))
+        if (Boostlet.framework.name === 'niivue' && Boostlet.framework.instance?.volumes) nv = Boostlet.framework.instance
       } catch (e) {}
+      if (!nv && ++tries <= 40) return
+      clearInterval(state.pollId); state.pollId = null
+      if (!nv) {
+        window.__boostlet_sync_injected = false
+        Boostlet.hint('Sync found no NiiVue viewer with a loaded volume', 5000)
+        return
+      }
+      if (window.Pusher) start(nv)
+      else loadScript('https://js.pusher.com/8.4.0/pusher.min.js', () => start(nv))
     }, 300)
   }
 
   function start(nv) {
     state.nv = nv
+    Boostlet.hint('Sync loaded', 2500)
     const code = new URLSearchParams(location.search).get('sync')
     if (code) joinScene(code)
     else { showPanel(); hostScene() }
