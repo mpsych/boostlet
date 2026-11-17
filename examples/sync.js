@@ -244,8 +244,11 @@
 
     if (!scene) { updatePanel(code); connectToRoom(code); return }
 
+    // only follow https pages so a scene cant send a javascript url
     if (scene.originUrl && !isSamePage(scene.originUrl, location.href)) {
-      const target = new URL(scene.originUrl)
+      let target
+      try { target = new URL(scene.originUrl) } catch (e) { target = null }
+      if (!target || target.protocol !== 'https:') { Boostlet.hint('scene has an invalid page url', 4000); return }
       target.searchParams.set('sync', code)
       location.href = target.toString()
       return
@@ -684,7 +687,8 @@
   }
 
   function promptBoostlets(boostlets) {
-    const missing = boostlets.filter(b => !(window.__boostlet_active || []).find(a => a.name === b.name))
+    // only offer boostlets that load from the boostlet repo or site
+    const missing = boostlets.filter(b => isTrustedBoostlet(b.url) && !(window.__boostlet_active || []).find(a => a.name === b.name))
     if (!missing.length) return
     const prompt = el('div', 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2147483647;background:#111;border:1.5px solid #444;border-radius:8px;padding:12px 16px;font-family:monospace;font-size:12px;color:#ccc;box-shadow:0 4px 16px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:8px;max-width:320px')
     prompt.append(el('div', 'font-size:11px;color:#888', 'host has these boostlets active'))
@@ -703,6 +707,15 @@
   }
 
   // ===== utils =====
+
+  function isTrustedBoostlet(url) {
+    try {
+      const u = new URL(url)
+      if (u.protocol !== 'https:') return false
+      if (u.hostname === 'boostlet.org') return true
+      return u.hostname === 'raw.githubusercontent.com' && u.pathname.startsWith('/mpsych/boostlet/')
+    } catch (e) { return false }
+  }
 
   // query params count too (minus sync) since single page viewers like slicedrop
   // keep what is loaded in the query string, not the path

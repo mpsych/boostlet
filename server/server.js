@@ -34,8 +34,8 @@ export default {
       if (!CODE_RE.test(code)) return json({ error: 'bad code' }, 400)
 
       const existing = parseEntry(await env.BOOSTLET_SCENES.get(code))
-      // entries from before tokens have no owner, so they stay writable
-      if (existing?.token && existing.token !== token) {
+      // only the token from the first publish can update a code
+      if (existing && existing.token !== token) {
         return json({ error: 'code taken' }, 409)
       }
 

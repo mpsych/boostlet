@@ -293,11 +293,15 @@ function runCode(broadcastRun, code) {
 
   // save current state before running
   window._numpySnapshot = vol.img.slice();
-  outputDiv.innerHTML = '';
+  outputDiv.textContent = '';
 
   // redirect console.log to the output div for this run
+  // text nodes only so logged strings never become html
   const origLog = console.log;
-  console.log = function(msg) { outputDiv.innerHTML += msg + '<br>'; };
+  console.log = function(msg) {
+    outputDiv.appendChild(document.createTextNode(String(msg)));
+    outputDiv.appendChild(document.createElement('br'));
+  };
 
   // wrap in async so user code can await if needed
   const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
@@ -307,7 +311,10 @@ function runCode(broadcastRun, code) {
     lastRunHash = await hashCode(code);
     if (broadcastRun) send({ type: 'numpy-run', hash: lastRunHash })
   }).catch(err => {
-    outputDiv.innerHTML += '<span style="color:#f77">' + err.toString() + '</span>';
+    const errSpan = document.createElement('span');
+    errSpan.style.color = '#f77';
+    errSpan.textContent = err.toString();
+    outputDiv.appendChild(errSpan);
     console.log = origLog;
   });
 }
