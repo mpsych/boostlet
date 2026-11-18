@@ -1,12 +1,9 @@
 # ROI Stats validation
 
 Checks that ROI Stats shows the same numbers nibabel computes from the file.
-sub-003 has scl_slope = 1, which can't catch a scaling bug, so we re-store it
-as int16 and let nibabel pick a real slope.
-
-Note: the OpenNeuro viewer reports scl_slope 0.0197 and scl_inter 645.5 for the
-original file. `make_variants.py` prints the original's slope and intercept, so
-run it once and correct the paragraph above if they are not 1 and 0.
+sub-003 is stored as int16 with scl_slope 0.0197 and scl_inter 645.5, so the
+original file already tests both scaling fields. `make_scaled.py` writes a copy
+with the same scaling and is kept only so the recorded `rec.json` still matches.
 
 ## Quick check (no browser)
 
@@ -14,7 +11,7 @@ Uses the recorded `rec.json` from our run.
 
 1. Download sub-003 from OpenNeuro ds004697 v1.0.1:
    https://openneuro.org/crn/datasets/ds004697/snapshots/1.0.1/files/sub-003:ses-1:anat:sub-003_ses-1_T1w.nii.gz
-2. `pip install nibabel==5.4.1`
+2. `pip install nibabel==5.4.2` (5.4.1 is no longer on PyPI)
 3. `python make_scaled.py` (should print scl_slope 0.0197)
 4. `python check.py`
 

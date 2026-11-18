@@ -1,5 +1,6 @@
 # write test copies of sub-003 covering data types, a chosen intercept and other axis orders
 import nibabel as nib, numpy as np
+from nibabel.affines import apply_affine
 from nibabel.orientations import axcodes2ornt, io_orientation, ornt_transform
 
 src = nib.load('sub-003_ses-1_T1w.nii.gz')
@@ -8,9 +9,14 @@ print('original', src.get_data_dtype(), src.shape, 'slope', src.dataobj.slope, '
       ''.join(nib.aff2axcodes(src.affine)))
 
 def save(name, arr, affine, dtype, slope=None, inter=None):
-    img = nib.Nifti1Image(arr, affine)
-    img.set_data_dtype(dtype)
-    if slope is not None:
+    if slope is None:
+        img = nib.Nifti1Image(arr, affine)
+        img.set_data_dtype(dtype)
+    else:
+        # nibabel keeps a header slope but writes the array unscaled
+        # so store the raw values ourselves
+        raw = np.round((arr - inter) / slope).astype(dtype)
+        img = nib.Nifti1Image(raw, affine)
         img.header.set_slope_inter(slope, inter)
     nib.save(img, name)
     back = nib.load(name)
@@ -26,8 +32,21 @@ save('var_uint8.nii.gz', data, src.affine, np.uint8)
 # a slope and intercept chosen here, so the intercept is known not to be zero
 save('var_inter.nii.gz', data, src.affine, np.int16, slope=0.05, inter=-100.0)
 
+# check a reordered copy holds the same value at the same world position as the original
+# a 10 by 10 by 10 grid of voxels including the edges goes through the original affine and back through the copy's
+def check_world(name):
+    back = nib.load(name)
+    vals = back.get_fdata()
+    axes = [np.linspace(0, s - 1, 10).astype(int) for s in data.shape]
+    ijk = np.stack(np.meshgrid(*axes, indexing='ij'), -1).reshape(-1, 3)
+    world = apply_affine(src.affine, ijk)
+    ijk2 = np.rint(apply_affine(np.linalg.inv(back.affine), world)).astype(int)
+    err = np.abs(vals[tuple(ijk2.T)] - data[tuple(ijk.T)]).max()
+    print(name, 'world lookup error', float(err))
+
 # other storage orders, the reordered axes have unequal lengths
 for codes in ('LAS', 'PIR', 'ASL'):
     ornt = ornt_transform(io_orientation(src.affine), axcodes2ornt(tuple(codes)))
     re = nib.Nifti1Image(data, src.affine).as_reoriented(ornt)
     save(f'var_{codes}.nii.gz', np.asarray(re.dataobj, dtype=np.float32), re.affine, np.int16)
+    check_world(f'var_{codes}.nii.gz')
