@@ -41,8 +41,13 @@ plane = 0
 tally = {n: dict(n=0, edge=0, fails=0, worst=0.0) for n in names.values()}
 boundary = 0
 far = 0
+outside = 0
 for r in recs:
     c = voxel(r)
+    # a cursor outside the volume has no patch to compare
+    if any(x < 0 or x >= n for x, n in zip(c, vol.shape[:3])):
+        outside += 1
+        continue
     if 'mm' in r:
         d = max(abs(a - b) for a, b in zip(c, voxel_from_mm(r)))
         boundary += d == 1
@@ -77,4 +82,4 @@ for name, t in tally.items():
     print(f"{name:9s} {t['n']:3d} positions, {t['edge']:3d} at an edge, {t['fails']:3d} failed, worst error {t['worst']:.4f}")
 print(len(recs), 'positions,', sum(t['fails'] for t in tally.values()), 'failed, worst error',
       max(t['worst'] for t in tally.values()))
-print(boundary, 'positions sit on a voxel boundary,', far, 'disagree by more than one voxel')
+print(boundary, 'positions sit on a voxel boundary,', far, 'disagree by more than one voxel,', outside, 'outside the volume skipped')
