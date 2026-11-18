@@ -3,7 +3,8 @@
 import json, sys, nibabel as nib, numpy as np
 
 path = sys.argv[1] if len(sys.argv) > 1 else 'sub-003_scaled.nii.gz'
-recs = json.load(open(sys.argv[2] if len(sys.argv) > 2 else 'rec.json'))
+# utf-8-sig also reads files windows powershell saved with a byte order mark
+recs = json.load(open(sys.argv[2] if len(sys.argv) > 2 else 'rec.json', encoding='utf-8-sig'))
 
 # reorder to RAS so axis 0 is left to right, 1 is back to front, 2 is bottom to top
 img = nib.as_closest_canonical(nib.load(path))
@@ -12,11 +13,14 @@ to_vox = np.linalg.inv(img.affine)
 names = {0: 'axial', 1: 'coronal', 2: 'sagittal'}
 
 def voxel(r):
-    # newer captures store the world position, which does not depend on storage order
-    if 'mm' in r:
-        return [int(x) for x in np.rint(to_vox @ [*r['mm'], 1])[:3]]
+    # the ras voxel niivue reported is what the user sees and what the plugin centers on
+    # it indexes the canonical volume directly since both are in ras order
     v = r['vox']
     return [int(v[k]) for k in ('0', '1', '2')] if isinstance(v, dict) else [int(x) for x in v]
+
+def voxel_from_mm(r):
+    # rounding the world position can pick the neighbor when the crosshair sits on a voxel boundary
+    return [int(x) for x in np.rint(to_vox @ [*r['mm'], 1])[:3]]
 
 def patch(c, plane):
     # axial holds z, coronal holds y, sagittal holds x
@@ -35,8 +39,15 @@ def error(r, p):
 # clicked panel does, and a move without a click keeps the previous plane
 plane = 0
 tally = {n: dict(n=0, edge=0, fails=0, worst=0.0) for n in names.values()}
+boundary = 0
+far = 0
 for r in recs:
     c = voxel(r)
+    if 'mm' in r:
+        d = max(abs(a - b) for a, b in zip(c, voxel_from_mm(r)))
+        boundary += d == 1
+        # more than one voxel apart means niivue and the file disagree on orientation
+        far += d > 1
     view, clicked = r.get('view'), r.get('clicked')
     if view in (0, 1, 2):
         plane = view
@@ -66,3 +77,4 @@ for name, t in tally.items():
     print(f"{name:9s} {t['n']:3d} positions, {t['edge']:3d} at an edge, {t['fails']:3d} failed, worst error {t['worst']:.4f}")
 print(len(recs), 'positions,', sum(t['fails'] for t in tally.values()), 'failed, worst error',
       max(t['worst'] for t in tally.values()))
+print(boundary, 'positions sit on a voxel boundary,', far, 'disagree by more than one voxel')

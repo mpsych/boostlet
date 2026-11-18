@@ -1,0 +1,56 @@
+﻿== original
+
+axial     9213 positions, 1291 at an edge,   0 failed, worst error 0.0050
+coronal   6235 positions, 1096 at an edge,   0 failed, worst error 0.0050
+sagittal  8325 positions, 1008 at an edge,   0 failed, worst error 0.0050
+23773 positions, 0 failed, worst error 0.005028859004369224
+0 positions sit on a voxel boundary, 0 disagree by more than one voxel
+== float32
+
+axial     5864 positions, 545 at an edge,   0 failed, worst error 0.0050
+coronal   5051 positions, 523 at an edge,   0 failed, worst error 0.0050
+sagittal  6095 positions, 326 at an edge,   0 failed, worst error 0.0050
+17010 positions, 0 failed, worst error 0.0049987667880078135
+0 positions sit on a voxel boundary, 0 disagree by more than one voxel
+== int16
+
+axial     6726 positions, 883 at an edge,   0 failed, worst error 0.0050
+coronal   4536 positions, 672 at an edge,   0 failed, worst error 0.0050
+sagittal  5013 positions, 422 at an edge,   0 failed, worst error 0.0050
+16275 positions, 0 failed, worst error 0.005028859004369224
+0 positions sit on a voxel boundary, 0 disagree by more than one voxel
+== uint8
+
+axial     6157 positions, 958 at an edge,   0 failed, worst error 0.0050
+coronal   4360 positions, 746 at an edge,   0 failed, worst error 0.0050
+sagittal  4428 positions, 552 at an edge,   0 failed, worst error 0.0050
+14945 positions, 0 failed, worst error 0.004998092867727344
+0 positions sit on a voxel boundary, 0 disagree by more than one voxel
+== inter
+
+axial     6315 positions, 1073 at an edge,   0 failed, worst error 0.0050
+coronal   6068 positions, 917 at an edge,   0 failed, worst error 0.0050
+sagittal  6157 positions, 807 at an edge,   0 failed, worst error 0.0050
+18540 positions, 0 failed, worst error 0.005003235250427451
+0 positions sit on a voxel boundary, 0 disagree by more than one voxel
+== LAS
+
+axial     8295 positions, 1381 at an edge,   0 failed, worst error 0.0050
+coronal   5591 positions, 858 at an edge,   0 failed, worst error 0.0050
+sagittal  5837 positions, 896 at an edge,   0 failed, worst error 0.0050
+19723 positions, 0 failed, worst error 0.005028859004369224
+0 positions sit on a voxel boundary, 0 disagree by more than one voxel
+== PIR
+
+axial     7536 positions, 1215 at an edge,   0 failed, worst error 0.0050
+coronal   6951 positions, 1515 at an edge,   0 failed, worst error 0.0050
+sagittal  8445 positions, 1208 at an edge,   0 failed, worst error 0.0050
+22932 positions, 0 failed, worst error 0.005028859004369224
+1212 positions sit on a voxel boundary, 0 disagree by more than one voxel
+== ASL
+
+axial     3924 positions, 1165 at an edge,   0 failed, worst error 0.0050
+coronal   3101 positions, 483 at an edge,   0 failed, worst error 0.0050
+sagittal  2863 positions, 463 at an edge,   0 failed, worst error 0.0050
+9888 positions, 0 failed, worst error 0.005023488998411096
+0 positions sit on a voxel boundary, 0 disagree by more than one voxel
