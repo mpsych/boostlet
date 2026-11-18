@@ -1,7 +1,7 @@
 CATEGORY = "ML"
 
-let boostletLoaded = false;
-let tfscriptLoaded = false;
+var boostletLoaded = false;
+var tfscriptLoaded = false;
 
 function tryRun() {
   if (boostletLoaded && tfscriptLoaded) {
@@ -20,7 +20,8 @@ script.onload = function() {
   tryRun();
 }
 script.onerror = function() { alert('Melanoma could not load Boostlet'); };
-document.head.appendChild(script);
+// skip loading boostlet again when the page already has it
+if (window.Boostlet) boostletLoaded = true; else document.head.appendChild(script);
 
 
 tfscript = document.createElement("script");

@@ -4,8 +4,8 @@ script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
 script.onload = run;
 script.onerror = function() { alert('CatVSDog could not load Boostlet'); };
-document.head.appendChild(script);
-eval(script);
+// skip loading boostlet again when the page already has it
+if (window.Boostlet) run(); else document.head.appendChild(script);
 
 CATEGORY = "ML"
 

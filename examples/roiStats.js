@@ -1,4 +1,5 @@
-const CATEGORY = "Statistics";
+// plain assignment since powerboost loads plugins as page scripts that share one scope
+CATEGORY = "Statistics";
 
 if (typeof window._RoiStatsLoaded === 'undefined') {
 window._RoiStatsLoaded = true;

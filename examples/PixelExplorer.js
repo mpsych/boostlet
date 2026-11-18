@@ -1,4 +1,5 @@
-const CATEGORY = "Visualization"
+// plain assignment since powerboost loads plugins as page scripts that share one scope
+CATEGORY = "Visualization"
 
 if (typeof window._PixelExplorerLoaded === 'undefined') {
 window._PixelExplorerLoaded = true;

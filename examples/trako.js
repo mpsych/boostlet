@@ -7,8 +7,8 @@ script.onload = function() {
   run().catch(function(e) { Boostlet.hint('Trako failed: ' + e.message, 5000); });
 };
 script.onerror = function() { alert('Trako could not load Boostlet'); };
-document.head.appendChild(script);
-eval(script);
+// skip loading boostlet again when the page already has it
+if (window.Boostlet) script.onload(); else document.head.appendChild(script);
 
 //
 // THIS ONLY WORKS WITH NIIVUE RIGHT NOW

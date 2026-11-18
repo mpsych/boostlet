@@ -6,12 +6,13 @@ script.src = "https://boostlet.org/dist/boostlet.min.js";
 
 script.onload = run;
 script.onerror = function() { alert('Image Captioning could not load Boostlet'); };
-document.head.appendChild(script);
-eval(script);
-
-const API_url = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
+// var not const so loading this twice on one page does not throw
+var API_url = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
 // token removed from the repo, set your own hugging face token here
-const API_TOKEN = ''
+var API_TOKEN = ''
+
+// skip loading boostlet again when the page already has it
+if (window.Boostlet) run(); else document.head.appendChild(script);
 
 async function run() {
 

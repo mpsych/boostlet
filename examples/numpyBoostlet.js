@@ -1,4 +1,5 @@
-const CATEGORY = "Utility";
+// plain assignment since powerboost loads plugins as page scripts that share one scope
+CATEGORY = "Utility";
 
 // guard so clicking the bookmarklet twice doesnt break anything
 if (typeof window._NumpyBoostletLoaded === 'undefined') {

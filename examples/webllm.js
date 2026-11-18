@@ -8,8 +8,8 @@ script.src = "https://gaiborjosue.github.io/boostlet/dist/boostlet.min.js";
 
 script.onload = run;
 script.onerror = function() { alert('LLM Chat could not load Boostlet'); };
-document.head.appendChild(script);
-eval(script);
+// skip loading boostlet again when the page already has it
+if (window.Boostlet) run(); else document.head.appendChild(script);
 
 async function run() {
   // detect visualization framework
