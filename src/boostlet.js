@@ -149,6 +149,10 @@ export class Boostlet {
     return this.framework.on_location_change(cb);
   }
 
+  get_display_flip(plane) {
+    return this.framework.get_display_flip ? this.framework.get_display_flip(plane) : { x: false, y: false };
+  }
+
   /**
    * Encode raw image data to PNG.
    */

@@ -118,6 +118,14 @@ export class Papaya extends Framework {
     return viewer.__boostletPlane;
   }
 
+  // papaya draws sagittal with the nose to the left
+  // its radiological preference mirrors left and right in axial and coronal
+  get_display_flip(plane) {
+    if (plane === 2) return { x: true, y: false };
+    const prefs = this.viewer().container.preferences || {};
+    return { x: prefs.radiological === "Yes", y: false };
+  }
+
   get_plane(loc) {
     if (loc && (loc.axCorSag === 0 || loc.axCorSag === 1 || loc.axCorSag === 2)) return loc.axCorSag;
     return this.track_plane();

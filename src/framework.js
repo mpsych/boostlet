@@ -72,6 +72,16 @@ export class Framework {
 
   }
 
+  // how the viewer draws a plane compared with ras
+  // x true means the first in plane axis runs right to left on screen
+  // y true means the second runs top to bottom
+  // default is neurological with the nose to the right in sagittal
+  get_display_flip(plane) {
+
+    return { x: false, y: false };
+
+  }
+
   // raw voxel values between two ras corners with x fastest
   get_subvolume(start, end) {
 

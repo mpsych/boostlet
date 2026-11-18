@@ -169,6 +169,14 @@ export class NiiVue extends Framework {
     return [0, 1, 2].map(i => Math.min(Math.floor(pos[i] * d[i + 1]), d[i + 1] - 1));
   }
 
+  // radiological view mirrors left and right in axial and coronal
+  // sagittalNoseLeft mirrors sagittal
+  get_display_flip(plane) {
+    const o = this.instance.opts || {};
+    if (plane === 2) return { x: !!o.sagittalNoseLeft, y: false };
+    return { x: !!o.isRadiologicalConvention, y: false };
+  }
+
   // niivue already sends vox in ras and the clicked panel as axCorSag
   // the handler that was there keeps running first
   on_location_change(cb) {

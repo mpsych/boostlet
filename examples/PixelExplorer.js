@@ -68,7 +68,9 @@ function setup() {
       // a negative start tells how many cells are missing on the low side
       const skip = [Math.max(0, -start[ax]), Math.max(0, -start[ay])];
       const mc = document.getElementById('PixelExplorerCanvas');
-      if (mc) drawMatrix(data, dims[ax], dims[ay], skip, mc);
+      // match how this viewer draws the plane so the grid lines up with the panel
+      const flip = Boostlet.get_display_flip ? Boostlet.get_display_flip(plane) : { x: false, y: false };
+      if (mc) drawMatrix(data, dims[ax], dims[ay], skip, flip, mc);
     }
   };
 
@@ -79,7 +81,7 @@ function setup() {
 // render voxel values as a labeled grayscale grid
 // the grid is always 9 by 9 with the crosshair voxel in the middle
 // cells that fall outside the volume stay dark and unlabeled
-function drawMatrix(data, cols, rows, skip, mc) {
+function drawMatrix(data, cols, rows, skip, flip, mc) {
   // display value is raw times slope plus inter and the window maps cal_min to black
   const { slope, inter, cal_min, cal_max } = Boostlet.get_scaling();
   const range = cal_max - cal_min || 1;
@@ -104,9 +106,10 @@ function drawMatrix(data, cols, rows, skip, mc) {
       const norm = (val - cal_min) / range;
       const g = Math.round(norm * 255);
 
-      // row 0 of the data is the bottom of the grid
-      const x = (c + skip[0]) * cell;
-      const y = (N - 1 - (r + skip[1])) * cell;
+      // row 0 of the data is the bottom of the grid unless the viewer draws it the other way
+      const gx = c + skip[0], gy = r + skip[1];
+      const x = (flip.x ? N - 1 - gx : gx) * cell;
+      const y = (flip.y ? gy : N - 1 - gy) * cell;
 
       ctx.fillStyle = `rgb(${g},${g},${g})`;
       ctx.fillRect(x, y, cell, cell);
