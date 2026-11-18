@@ -83,7 +83,8 @@ function setup(nv) {
 
   // make a loc object from current crosshair state so the panel fills immediately
   const pos = nv.scene.crosshairPos;
-  const dims = nv.volumes[0].dims;
+  // crosshairPos is a fraction along the ras axes
+  const dims = nv.volumes[0].dimsRAS || nv.volumes[0].dims;
   // floor matches how niivue maps crosshair position to a voxel
   const initialVox = [
     Math.min(Math.floor(pos[0] * dims[1]), dims[1] - 1),

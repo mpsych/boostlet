@@ -88,7 +88,8 @@ async function setup(nv) {
 
   // fire immediately so panel populates on load
   const pos = nv.scene.crosshairPos;
-  const dims = nv.volumes[0].dims;
+  // crosshairPos is a fraction along the ras axes
+  const dims = nv.volumes[0].dimsRAS || nv.volumes[0].dims;
   // floor matches how niivue maps crosshair position to a voxel
   triggerUpdate({ vox: [
     Math.min(Math.floor(pos[0] * dims[1]), dims[1] - 1),
