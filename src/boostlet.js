@@ -131,6 +131,24 @@ export class Boostlet {
     return this.framework.get_subvolume(start, end);
   }
 
+  // the methods below let one plugin read voxels on any viewer that implements them
+
+  has_volume() {
+    return !!(this.framework && this.framework.has_volume());
+  }
+
+  get_scaling() {
+    return this.framework.get_scaling();
+  }
+
+  get_crosshair_vox() {
+    return this.framework.get_crosshair_vox();
+  }
+
+  on_location_change(cb) {
+    return this.framework.on_location_change(cb);
+  }
+
   /**
    * Encode raw image data to PNG.
    */

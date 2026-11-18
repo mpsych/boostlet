@@ -8,7 +8,7 @@ window._PixelExplorerLoaded = true;
 
 const HALF = 4;
 
-// load boostlet once then wait for niivue with a loaded volume
+// load boostlet once then wait for a viewer with a loaded volume
 if (window.Boostlet) {
   waitForViewer();
 } else {
@@ -22,35 +22,29 @@ function waitForViewer() {
   let tries = 0;
   const poll = setInterval(function() {
     try { Boostlet.init(); } catch(e) {}
-    const fw = Boostlet.framework;
-    const ready = fw && fw.name === 'niivue' && fw.instance.volumes && fw.instance.volumes.length;
+    // any viewer whose adapter can read voxels works so niivue and papaya both do
+    const ready = Boostlet.has_volume && Boostlet.has_volume();
     if (!ready && ++tries <= 40) return;
     clearInterval(poll);
     if (ready) {
-      setup(fw.instance);
-      Boostlet.hint('PixelExplorer loaded', 2500);
+      setup();
+      Boostlet.hint('PixelExplorer loaded on ' + Boostlet.framework.name, 2500);
       return;
     }
-    // init falls back to a plain canvas so no niivue after 12 seconds means there is none
+    // init falls back to a plain canvas so no viewer after 12 seconds means there is none
     // clearing the flag lets the bookmark be clicked again
     delete window._PixelExplorerLoaded;
-    Boostlet.hint('PixelExplorer found no NiiVue viewer with a loaded volume', 5000);
+    Boostlet.hint('PixelExplorer found no supported viewer with a loaded volume', 5000);
   }, 300);
 }
 
-function setup(nv) {
+function setup() {
   // create the panel once
   plot();
 
-  // save the existing onLocationChange so we don't clobber it
-  const existingOnLocationChange = nv.onLocationChange;
-
-  // hook into location change — fires on every crosshair move / slice change
-  // fire once immediately so the panel is populated on load without requiring a click
+  // runs on every crosshair move and once now so the panel fills on load
   const triggerUpdate = function(loc) {
-    if (existingOnLocationChange) existingOnLocationChange(loc);
-
-    if (!nv.volumes || !nv.volumes.length) return;
+    if (!Boostlet.has_volume()) return;
 
     const v = [Math.round(loc.vox[0]), Math.round(loc.vox[1]), Math.round(loc.vox[2])];
 
@@ -59,9 +53,7 @@ function setup(nv) {
 
     // boostlet knows the plane as 0 axial 1 coronal 2 sagittal
     // in multiplanar that is the panel which was clicked last
-    // a boostlet build from before get_plane only knows single plane views
-    const view = nv.opts.sliceType;
-    const plane = Boostlet.get_plane ? Boostlet.get_plane(loc) : (view === 1 || view === 2) ? view : 0;
+    const plane = Boostlet.get_plane(loc);
 
     // collapse the axis perpendicular to that plane to a single voxel
     // axial holds z and coronal holds y and sagittal holds x
@@ -80,35 +72,18 @@ function setup(nv) {
     }
   };
 
-  nv.onLocationChange = triggerUpdate;
-
-  // make a loc object from current crosshair state so the panel fills immediately
-  const pos = nv.scene.crosshairPos;
-  // crosshairPos is a fraction along the ras axes
-  const dims = nv.volumes[0].dimsRAS || nv.volumes[0].dims;
-  // floor matches how niivue maps crosshair position to a voxel
-  const initialVox = [
-    Math.min(Math.floor(pos[0] * dims[1]), dims[1] - 1),
-    Math.min(Math.floor(pos[1] * dims[2]), dims[2] - 1),
-    Math.min(Math.floor(pos[2] * dims[3]), dims[3] - 1)
-  ];
-  triggerUpdate({ vox: initialVox });
+  Boostlet.on_location_change(triggerUpdate);
+  triggerUpdate({ vox: Boostlet.get_crosshair_vox() });
 }
 
 // render voxel values as a labeled grayscale grid
 // the grid is always 9 by 9 with the crosshair voxel in the middle
 // cells that fall outside the volume stay dark and unlabeled
 function drawMatrix(data, cols, rows, skip, mc) {
-  const nv = Boostlet.framework.instance;
-  const { cal_min, cal_max } = nv.volumes[0];
+  // display value is raw times slope plus inter and the window maps cal_min to black
+  const { slope, inter, cal_min, cal_max } = Boostlet.get_scaling();
   const range = cal_max - cal_min || 1;
   const ctx = mc.getContext('2d');
-
-  // apply nifti slope/intercept to convert raw values to display values.
-  // raw voxel values can be stored in arbitrary units (e.g. large negatives like -9000)
-  // and need to be scaled to match what NiiVue actually displays: display_value = raw * slope + inter
-  const slope = nv.volumes[0].hdr.scl_slope || 1;
-  const inter = nv.volumes[0].hdr.scl_inter || 0;
 
   const N = HALF * 2 + 1;
   const cell = Math.floor(mc.width / N);

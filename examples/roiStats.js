@@ -11,7 +11,7 @@ const NUMPY_TS_URL = 'https://cdn.jsdelivr.net/npm/numpy-ts@1.3.0/dist/numpy-ts.
 // half width of the roi in voxels so the full neighborhood is (2*HALF+1)^2
 const HALF = 4;
 
-// load boostlet once then wait for niivue with a loaded volume
+// load boostlet once then wait for a viewer with a loaded volume
 if (window.Boostlet) {
   waitForViewer();
 } else {
@@ -25,38 +25,36 @@ function waitForViewer() {
   let tries = 0;
   const poll = setInterval(function() {
     try { Boostlet.init(); } catch(e) {}
-    const fw = Boostlet.framework;
-    const ready = fw && fw.name === 'niivue' && fw.instance.volumes && fw.instance.volumes.length;
+    // any viewer whose adapter can read voxels works so niivue and papaya both do
+    const ready = Boostlet.has_volume && Boostlet.has_volume();
     if (!ready && ++tries <= 40) return;
     clearInterval(poll);
     if (ready) {
       // setup waits on numpy-ts so say loaded only once it is in
-      setup(fw.instance)
-        .then(() => Boostlet.hint('ROI Stats loaded', 2500))
+      setup()
+        .then(() => Boostlet.hint('ROI Stats loaded on ' + Boostlet.framework.name, 2500))
         .catch(() => {
           delete window._RoiStatsLoaded;
           Boostlet.hint('ROI Stats could not load numpy-ts', 5000);
         });
       return;
     }
-    // init falls back to a plain canvas so no niivue after 12 seconds means there is none
+    // init falls back to a plain canvas so no viewer after 12 seconds means there is none
     // clearing the flag lets the bookmark be clicked again
     delete window._RoiStatsLoaded;
-    Boostlet.hint('ROI Stats found no NiiVue viewer with a loaded volume', 5000);
+    Boostlet.hint('ROI Stats found no supported viewer with a loaded volume', 5000);
   }, 300);
 }
 
-async function setup(nv) {
+async function setup() {
   plot();
 
   // load numpy-ts directly no boostlet wrapper needed
   const np = await import(NUMPY_TS_URL);
 
-  const existingOnLocationChange = nv.onLocationChange;
-
-  const triggerUpdate = async function(loc) {
-    if (existingOnLocationChange) existingOnLocationChange(loc);
-    if (!nv.volumes || !nv.volumes.length) return;
+  // runs on every crosshair move and once now so the panel fills on load
+  const triggerUpdate = function(loc) {
+    if (!Boostlet.has_volume()) return;
 
     const v = [Math.round(loc.vox[0]), Math.round(loc.vox[1]), Math.round(loc.vox[2])];
 
@@ -65,9 +63,7 @@ async function setup(nv) {
 
     // boostlet knows the plane as 0 axial 1 coronal 2 sagittal
     // in multiplanar that is the panel which was clicked last
-    // a boostlet build from before get_plane only knows single plane views
-    const view = nv.opts.sliceType;
-    const plane = Boostlet.get_plane ? Boostlet.get_plane(loc) : (view === 1 || view === 2) ? view : 0;
+    const plane = Boostlet.get_plane(loc);
 
     // collapse the axis perpendicular to that plane to a single voxel
     // axial holds z and coronal holds y and sagittal holds x
@@ -81,22 +77,12 @@ async function setup(nv) {
     const size = Array.from(dims).filter((d, i) => i !== fixedAxis);
     document.getElementById('roi-title').textContent = `ROI Stats (${size[0]}×${size[1]})`;
 
-    const result = computeStats(np, data, nv.volumes[0]);
+    const result = computeStats(np, data, Boostlet.get_scaling());
     updatePanel(result);
   };
 
-  nv.onLocationChange = triggerUpdate;
-
-  // fire immediately so panel populates on load
-  const pos = nv.scene.crosshairPos;
-  // crosshairPos is a fraction along the ras axes
-  const dims = nv.volumes[0].dimsRAS || nv.volumes[0].dims;
-  // floor matches how niivue maps crosshair position to a voxel
-  triggerUpdate({ vox: [
-    Math.min(Math.floor(pos[0] * dims[1]), dims[1] - 1),
-    Math.min(Math.floor(pos[1] * dims[2]), dims[2] - 1),
-    Math.min(Math.floor(pos[2] * dims[3]), dims[3] - 1)
-  ]});
+  Boostlet.on_location_change(triggerUpdate);
+  triggerUpdate({ vox: Boostlet.get_crosshair_vox() });
 }
 
 // write computed stats into the panel dom elements
@@ -160,9 +146,8 @@ function plot() {
 
 // inline stat functions using numpy-ts directly
 // apply nifti slope/intercept then compute all stats in one pass
-function computeStats(np, data, volume) {
-  const slope = (volume && volume.hdr.scl_slope) || 1;
-  const inter = (volume && volume.hdr.scl_inter) || 0;
+function computeStats(np, data, scaling) {
+  const { slope, inter } = scaling;
   // pass the typed array directly, Array.from is a slow extra copy
   const raw = np.array(data, 'float32');
   const scaled = raw.multiply(slope);

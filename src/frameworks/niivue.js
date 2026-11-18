@@ -145,6 +145,41 @@ export class NiiVue extends Framework {
 
 
 
+  has_volume() {
+    const v = this.instance.volumes;
+    return !!(v && v.length);
+  }
+
+  get_scaling() {
+    const v = this.instance.volumes[0];
+    return {
+      slope: v.hdr.scl_slope || 1,
+      inter: v.hdr.scl_inter || 0,
+      cal_min: v.cal_min,
+      cal_max: v.cal_max
+    };
+  }
+
+  // crosshairPos is a fraction along the ras axes
+  // floor matches how niivue maps it to a voxel
+  get_crosshair_vox() {
+    const pos = this.instance.scene.crosshairPos;
+    const v = this.instance.volumes[0];
+    const d = v.dimsRAS || v.dims;
+    return [0, 1, 2].map(i => Math.min(Math.floor(pos[i] * d[i + 1]), d[i + 1] - 1));
+  }
+
+  // niivue already sends vox in ras and the clicked panel as axCorSag
+  // the handler that was there keeps running first
+  on_location_change(cb) {
+    const nv = this.instance;
+    const previous = nv.onLocationChange;
+    nv.onLocationChange = function(loc) {
+      if (previous) previous.apply(this, arguments);
+      cb(loc);
+    };
+  }
+
   get_subvolume(start, end) {
     const v = this.instance.volumes[0];
     // getVolumeData returns nothing if a coord is negative
