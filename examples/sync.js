@@ -18,7 +18,8 @@
     nv: null, pusher: null, channel: null,
     peers: new Map(), selfId: null,
     last: {}, rafId: null, pollId: null,
-    dropboxToken: null, roomCode: null, sceneToken: null
+    dropboxToken: null, roomCode: null, sceneToken: null,
+    isHost: false
   }
 
   // time of the last failed send warning so hints dont pile up
@@ -94,11 +95,7 @@
 
   window.__boostlet_sync_destroy = function () {
     if (state.pollId) clearInterval(state.pollId)
-    if (state.rafId) cancelAnimationFrame(state.rafId)
-    if (state.channel) state.channel.unbind_all()
-    if (state.pusher) state.pusher.disconnect()
-    state.peers.forEach(peer => { peer.channel?.close(); peer.conn.close() })
-    state.peers.clear()
+    leaveRoom()
     document.getElementById('__sync_panel')?.remove()
     window.__boostlet_sync_injected = false
   }
@@ -139,8 +136,9 @@
     state.nv = nv
     Boostlet.hint('Sync loaded', 2500)
     const code = new URLSearchParams(location.search).get('sync')
+    // a share link joins right away and otherwise the panel waits for host or join
     if (code) joinScene(code)
-    else { showPanel(); hostScene() }
+    else showPanel()
   }
 
   // ===== scene =====
@@ -228,18 +226,21 @@
 
   // ===== host and join =====
 
+  // runs from the host button click and must reach the dropbox popup without an await
+  // so the popup still counts as part of the click
   async function hostScene() {
+    leaveRoom()
     const code = makeCode()
     state.roomCode = code
-    const params = new URLSearchParams(location.search)
-    params.set('sync', code)
-    history.replaceState(null, '', `${location.pathname}?${params}${location.hash}`)
+    state.isHost = true
+    setSyncParam(code)
     updatePanel(code)
     connectToRoom(code)
     await publishScene(code, readScene(true))
   }
 
   async function joinScene(code) {
+    leaveRoom()
     state.roomCode = code
     let scene
     try {
@@ -250,7 +251,7 @@
       }
     } catch (e) {}
 
-    if (!scene) { updatePanel(code); connectToRoom(code); return }
+    if (!scene) { setSyncParam(code); updatePanel(code); connectToRoom(code); return }
 
     // only follow https pages so a scene cant send a javascript url
     if (scene.originUrl && !isSamePage(scene.originUrl, location.href)) {
@@ -263,6 +264,7 @@
     }
 
     await applyScene(scene)
+    setSyncParam(code)
     updatePanel(code)
     if (scene.activeBoostlets?.length) promptBoostlets(scene.activeBoostlets)
     connectToRoom(code)
@@ -281,6 +283,24 @@
       const data = await res.json()
       if (data.token) state.sceneToken = data.token
     } catch (e) {}
+  }
+
+  // leave the current room before hosting or joining another so only one stays open
+  function leaveRoom() {
+    if (state.rafId) cancelAnimationFrame(state.rafId)
+    if (state.channel) state.channel.unbind_all()
+    if (state.pusher) state.pusher.disconnect()
+    state.peers.forEach(peer => { peer.channel?.close(); peer.conn.close() })
+    state.peers.clear()
+    state.rafId = state.pusher = state.channel = state.selfId = state.sceneToken = null
+    state.isHost = false
+  }
+
+  // keep the room code in the address bar so the page address is the share link
+  function setSyncParam(code) {
+    const params = new URLSearchParams(location.search)
+    params.set('sync', code)
+    history.replaceState(null, '', `${location.pathname}?${params}${location.hash}`)
   }
 
   // 10 chars from a crypto source so room codes cant be guessed
@@ -366,6 +386,11 @@
   async function dropboxAuth() {
     if (state.dropboxToken) return state.dropboxToken
 
+    // open the popup before any await so it still belongs to the click
+    // safari blocks a popup that opens after the click handler returned
+    const popup = window.open('about:blank', 'dropbox_auth', 'width=500,height=700')
+    if (!popup) { Boostlet.hint('popup blocked by browser', 4000); return null }
+
     const verifier = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('')
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
     const challenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
@@ -376,8 +401,7 @@
       + '&code_challenge_method=S256&redirect_uri=' + encodeURIComponent(DROPBOX_REDIRECT)
       + '&token_access_type=online'
 
-    const popup = window.open(authUrl, 'dropbox_auth', 'width=500,height=700')
-    if (!popup) { Boostlet.hint('popup blocked by browser', 4000); return null }
+    popup.location.href = authUrl
 
     const authCode = await new Promise(resolve => {
       const onMsg = e => { if (e.data?.type === 'dropbox-auth') { window.removeEventListener('message', onMsg); resolve(e.data.code) } }
@@ -551,6 +575,11 @@
     peer.channel = channel
 
     channel.onopen = async () => {
+      // the host sends its whole view once so a late joiner starts where the host is
+      // after that only changes are sent
+      if (state.isHost) {
+        try { channel.send(JSON.stringify({ type: 'scene-patch', patch: readScene(false) })) } catch (e) {}
+      }
       const hash = await hashVolume()
       try { channel.send(JSON.stringify({ type: 'hash-hello', hash })) } catch (e) {}
       // lets boostlets exchange their own state with the new peer
@@ -662,8 +691,13 @@
     panel.id = '__sync_panel'
     const close = el('button', 'position:absolute;top:6px;right:8px;background:none;border:none;color:#666;font-size:14px;cursor:pointer', '×')
     close.onclick = () => panel.remove()
-    const status = el('div', 'font-size:11px;color:#666', 'starting...')
+    // the host button sits where the room code goes and is replaced by it
+    // hosting opens the dropbox sign in so it has to start from this click
+    const status = el('div', 'font-size:11px;color:#666')
     status.id = '__sync_status'
+    const hostBtn = el('button', `${BTN};background:#1a3a1a;color:#8c8;border:1px solid #4a4`, 'host')
+    hostBtn.onclick = () => { hostBtn.disabled = true; hostScene() }
+    status.append(hostBtn)
     const input = el('input', 'background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:4px 6px;font-family:monospace;font-size:12px;width:100px;outline:none')
     input.placeholder = 'room code'; input.maxLength = 10
     const joinBtn = el('button', `${BTN};background:#1a3a6a;color:#fff`, 'join')
@@ -671,7 +705,7 @@
       const code = input.value.trim().toLowerCase()
       if (!code) return
       joinBtn.disabled = true
-      joinScene(code).catch(() => { joinBtn.disabled = false })
+      joinScene(code).finally(() => { joinBtn.disabled = false })
     }
     input.onkeydown = e => { if (e.key === 'Enter') joinBtn.click() }
     const row = el('div', 'display:flex;gap:6px')
@@ -683,12 +717,15 @@
   function updatePanel(code) {
     const status = document.getElementById('__sync_status')
     if (!status) return
-    const shareUrl = `${location.origin}${location.pathname}?sync=${code}`
+    // the full address keeps the page state in the query so the link opens the same view
+    const shareUrl = location.href
     const copyBtn = el('button', `${BTN};background:#1a3a1a;color:#8c8;border:1px solid #4a4`, 'copy link')
     copyBtn.onclick = () => navigator.clipboard.writeText(shareUrl).then(() => { copyBtn.textContent = 'copied'; setTimeout(() => { copyBtn.textContent = 'copy link' }, 1500) })
     const codeRow = el('div', 'display:flex;align-items:center;gap:8px')
     codeRow.append(el('span', 'color:#4a4;letter-spacing:.1em;font-size:13px', code), copyBtn)
     const row = el('div', 'display:flex;flex-direction:column;gap:6px')
+    // same id so a later host or join replaces this row again
+    row.id = '__sync_status'
     row.append(codeRow)
     if (DROPBOX_APP_KEY) {
       const btn = el('button', `${BTN};background:#0061fe;color:#fff;margin-top:2px`, 'save volume to dropbox')
