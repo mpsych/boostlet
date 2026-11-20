@@ -5,12 +5,12 @@
   // ===== config =====
 
   const BOOSTLET_URL = 'https://boostlet.org/dist/boostlet.min.js'
-  const PUSHER_KEY = '1a1ef7128331ff9bbc00'
+  const PUSHER_KEY = '831ed99bd7a1e904c749'
   const PUSHER_CLUSTER = 'us2'
-  const PUSHER_AUTH_URL = 'https://boostlet-pusher-auth.bronsdonayden.workers.dev'
+  const PUSHER_AUTH_URL = 'https://boostlet-sync.mpsych.workers.dev'
   const ICE_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-  const DROPBOX_APP_KEY = '4ugn042y7wktv7t'
-  const DROPBOX_REDIRECT = 'https://bronsdonayden.github.io/boostlet/dropbox-callback.html'
+  const DROPBOX_APP_KEY = '3iucmciu34krlh9'
+  const DROPBOX_REDIRECT = 'https://boostlet.org/dropbox-callback.html'
 
   // ===== state =====
 
@@ -587,6 +587,10 @@
         return
       }
       if (msg.type === 'volume-ready' && msg.volumeUrl) {
+        // only load volumes shared through dropbox
+        let host = ''
+        try { host = new URL(msg.volumeUrl).hostname } catch (e) {}
+        if (!host.endsWith('dropboxusercontent.com') && !host.endsWith('dropbox.com')) return
         // always load the dropbox volume regardless of whether a volume is already present
         Boostlet.hint('loading volume from dropbox', 3000)
         state.nv.loadVolumes([{ url: msg.volumeUrl }]).then(() => {

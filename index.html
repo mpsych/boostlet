@@ -245,7 +245,7 @@
 
     window.onload = function() {
 
-        var examples = ['PixelExplorer.js', 'roiStats.js', 'numpyBoostlet.js', 'sync.js', 'sobel.js', 'plotly.js', 'brainchop.js', 'meshAR.js', 'fibersAR.js', 'webllm.js', 'melanoma.js', 'trako.js', 'CatVSDog.js', 'imageCaptioning.js'];
+        var examples = ['PixelExplorer.js', 'roiStats.js', 'numpyBoostlet.js', 'sync.js', 'sobel.js', 'plotly.js', 'brainchop.js', 'meshAR.js', 'fibersAR.js', 'webllm.js', 'melanoma.js', 'CatVSDog.js'];
 
         // set this to the release tag once one exists so bookmarks load archived code
         var version = 'main';
@@ -325,14 +325,12 @@
 
         <div class='tip' data-tip="Edge filter on the rendered image. Click the result to restore the viewer. Works with any supported viewer."><a href='' id='sobel.js'><span class="button">Sobel Filter</span></a><br><div style='margin:2px'><a href='' id='sobel.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
 
-        <div class='tip' data-tip="Captions the current slice with a hosted model. Not maintained: the hosting service no longer responds."><a href='' id='imageCaptioning.js'><span class="button">Image Captioning </span></a><br><div style='margin:2px'><a href='' id='imageCaptioning.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
 
         <div class='tip' data-tip="Histogram of the pixels on screen. Works with any supported viewer."><a href='' id='plotly.js'><span class="button">Plotly Histogram</span></a><br><div style='margin:2px'><a href='' id='plotly.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
 
       </div>
       <div class="buttons">
 
-        <div class='tip' data-tip="Loads compressed fiber tracts (.tko). Not maintained: currently not working."><a href='' id='trako.js'><span class="button">Trako (NiiVue only!)</span></a><br><div style='margin:2px'><a href='' id='trako.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
 
         <div class='tip' data-tip="Brain tissue segmentation that runs in the browser. Needs NiiVue."><a href='' id='brainchop.js'><span class="button">Brainchop</span></a><br><div style='margin:2px'><a href='' id='brainchop.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
 
@@ -434,7 +432,7 @@
       <img src='gfx/faq.png' style='width:100px'><br>
       <ol>
         <li class="question" onclick="toggleAnswer(1)">Which visualization frameworks are supported?</li>
-        <li class="answer" id="answer1">Currently <a href='https://cornerstonejs.org' target='_blank'>Cornerstone2D.js</a> and <a href='https://github.com/niivue/niivue' target='_blank'>NiiVue.js</a>. Others like <a href='https://cornerstonejs.org' target='_blank'>openseadragon.js, <a href='https://slicedrop.com' target='_blank'>slicedrop.com</a>, <a href='https://rii-mango.github.io/Papaya/' target='_blank'>Papaya</a> are in the works! <a href="http://brainchop.org">BrainChop</a> we are coming for you - j/k :))))</li>
+        <li class="answer" id="answer1">NiiVue, Papaya, Cornerstone2D, OpenSeadragon and XTK. PixelExplorer and ROI Stats run on NiiVue and Papaya. The NumPy Boostlet and Sync run on NiiVue.</li>
         <li class="question" onclick="toggleAnswer(2)">What can BOOSTLETs really do?</li>
         <li class="answer" id="answer2">Any processing with any library is possible! The examples above use plotly.js or ONNX.js. BOOSTLETs provide methods that allow data access and interaction across different frameworks through JS injection. This is all client-side, unless you send some requests to a server.</li>
         <li class="question" onclick="toggleAnswer(3)">Do the algorithms work on the real data?</li>
