@@ -1,0 +1,23 @@
+{
+  "title": "Boostlet.js: JavaScript injection plugins for web medical image viewers",
+  "upload_type": "software",
+  "description": "Boostlet.js loads image processing plugins into web medical image viewers from a browser bookmark, with no installation and no changes to the viewer. This release includes the PixelExplorer, ROI Stats, NumPy and Sync Boostlets, the NiiVue and Papaya adapters, and the validation and benchmark scripts described in Bronsdon et al., Frontiers in Bioinformatics.",
+  "creators": [
+    { "name": "Bronsdon, Ayden", "affiliation": "University of Massachusetts Boston" },
+    { "name": "Kanamarlapudi, Avanith", "affiliation": "University of Massachusetts Boston" },
+    { "name": "Gaibor, Edward", "affiliation": "University of Massachusetts Boston" },
+    { "name": "Varade, Shruti", "affiliation": "University of Massachusetts Boston" },
+    { "name": "Deshmukh, Rohini", "affiliation": "University of Massachusetts Boston" },
+    { "name": "Meyer, Tim", "affiliation": "University of Massachusetts Boston" },
+    { "name": "Geshvadi, Mahsa", "affiliation": "University of Massachusetts Boston" },
+    { "name": "Kim, SangHyuk", "affiliation": "University of Massachusetts Boston" },
+    { "name": "Narayanappa, Vidhya Sree", "affiliation": "University of Massachusetts Boston" },
+    { "name": "Haehn, Daniel", "affiliation": "University of Massachusetts Boston" }
+  ],
+  "license": "MIT",
+  "keywords": ["neuroimaging", "web visualization", "JavaScript injection", "NiiVue", "Papaya", "WebRTC"],
+  "related_identifiers": [
+    { "identifier": "https://github.com/mpsych/boostlet", "relation": "isSupplementTo", "scheme": "url" },
+    { "identifier": "10.1109/ISBI60581.2025.10981020", "relation": "isDocumentedBy", "scheme": "doi" }
+  ]
+}
