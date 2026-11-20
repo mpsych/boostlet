@@ -1,4 +1,4 @@
-CATEGORY = "Filter"
+CATEGORY = "Hidden"
 
 script = document.createElement("script");
 script.type = "text/javascript";

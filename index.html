@@ -70,6 +70,50 @@
         color: white;
     }
 
+    /* equal cards, four per row, two on narrow screens */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px 14px;
+      margin-bottom: 30px;
+    }
+
+    .gallery .tip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .gallery .tip > a:first-child {
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .gallery .button {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 56px;
+      padding: 8px 6px;
+      font-size: 18px;
+    }
+
+    /* outside the link so a dragged bookmark is named just the plugin */
+    .gallery .viewers {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      color: #444;
+    }
+
+    @media (max-width: 700px) {
+      .gallery { grid-template-columns: repeat(2, 1fr); }
+    }
+
     .tip {
         position: relative;
     }
@@ -321,43 +365,19 @@
 
       <!-- 2. Or select individual BOOSTLETs and drag them! -->
       <img src='gfx/1b.png' class='imgtext'>
-      <div class="buttons">
-
-        <div class='tip' data-tip="Edge filter on the rendered image. Click the result to restore the viewer. Works with any supported viewer."><a href='' id='sobel.js'><span class="button">Sobel Filter</span></a><br><div style='margin:2px'><a href='' id='sobel.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-
-        <div class='tip' data-tip="Histogram of the pixels on screen. Works with any supported viewer."><a href='' id='plotly.js'><span class="button">Plotly Histogram</span></a><br><div style='margin:2px'><a href='' id='plotly.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-      </div>
-      <div class="buttons">
-
-
-        <div class='tip' data-tip="Brain tissue segmentation that runs in the browser. Needs NiiVue."><a href='' id='brainchop.js'><span class="button">Brainchop</span></a><br><div style='margin:2px'><a href='' id='brainchop.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        <div class='tip' data-tip="Chat with a language model that runs in your browser. Needs WebGPU and can take half a minute to appear."><a href='' id='webllm.js'><span class="button">LLM Chat</span></a><br><div style='margin:2px'><a href='' id='webllm.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        <div class='tip' data-tip="Drop a skin photo to classify it. Does not use the viewer."><a href='' id='melanoma.js'><span class="button">Melanoma Predictor</span></a><br><div style='margin:2px'><a href='' id='melanoma.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-      </div>
-      <div class="buttons">
-
-        <div class='tip' data-tip="Shows the loaded surface mesh in augmented reality. Needs NiiVue with a mesh loaded and a webcam."><a href='' id='meshAR.js'><span class="button">Mesh AR</span></a><br><div style='margin:2px'><a href='' id='meshAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        <div class='tip' data-tip="Classifies a 2D photo loaded in NiiVue. Does not work on medical volumes."><a href='' id='CatVSDog.js'><span class="button">CatVSDog</span></a><br><div style='margin:2px'><a href='' id='CatVSDog.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        <div class='tip' data-tip="Shows the loaded fiber tract in augmented reality. Needs NiiVue with a tract loaded and a webcam."><a href='' id='fibersAR.js'><span class="button">Fibers AR</span></a><br><div style='margin:2px'><a href='' id='fibersAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-      </div>
-      <div class="buttons">
-
-        <div class='tip' data-tip="Labeled 9x9 grid of the voxel values around the crosshair, in the plane you clicked. Works in NiiVue and Papaya."><a href='' id='PixelExplorer.js'><span class="button">Pixel Explorer (NiiVue, Papaya)</span></a><br><div style='margin:2px'><a href='' id='PixelExplorer.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        <div class='tip' data-tip="Mean, standard deviation, minimum, maximum and quartiles of the 9x9 patch around the crosshair. Works in NiiVue and Papaya."><a href='' id='roiStats.js'><span class="button">ROI Stats (NiiVue, Papaya)</span></a><br><div style='margin:2px'><a href='' id='roiStats.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        <div class='tip' data-tip="Code editor that reads and changes the volume with NumPy style JavaScript, with one click undo."><a href='' id='numpyBoostlet.js'><span class="button">NumPy Editor (NiiVue only!)</span></a><br><div style='margin:2px'><a href='' id='numpyBoostlet.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        <div class='tip' data-tip="Links viewers in real time: crosshair, view, 3D camera and the NumPy editor. Anyone with the room code can join."><a href='' id='sync.js'><span class="button">Sync (NiiVue only!)</span></a><br><div style='margin:2px'><a href='' id='sync.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
+      <div class="gallery">
+        <div class='tip' data-tip="Labeled 9x9 grid of the voxel values around the crosshair, in the plane you clicked. Works in NiiVue and Papaya."><a href='' id='PixelExplorer.js'><span class="button">Pixel Explorer</span></a><span class="viewers">NiiVue, Papaya</span><a href='' id='PixelExplorer.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Mean, standard deviation, minimum, maximum and quartiles of the 9x9 patch around the crosshair. Works in NiiVue and Papaya."><a href='' id='roiStats.js'><span class="button">ROI Stats</span></a><span class="viewers">NiiVue, Papaya</span><a href='' id='roiStats.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Code editor that reads and changes the volume with numpy-ts, a JavaScript version of NumPy, with one click undo."><a href='' id='numpyBoostlet.js'><span class="button">NumPy Editor</span></a><span class="viewers">NiiVue</span><a href='' id='numpyBoostlet.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Links viewers in real time: crosshair, view, 3D camera and the NumPy editor. Anyone with the room code can join."><a href='' id='sync.js'><span class="button">Sync</span></a><span class="viewers">NiiVue</span><a href='' id='sync.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Edge filter on the rendered image. Click the result to restore the viewer. Works with any supported viewer."><a href='' id='sobel.js'><span class="button">Sobel Filter</span></a><span class="viewers">any viewer</span><a href='' id='sobel.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Histogram of the pixels on screen. Works with any supported viewer."><a href='' id='plotly.js'><span class="button">Plotly Histogram</span></a><span class="viewers">any viewer</span><a href='' id='plotly.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Brain tissue segmentation that runs in the browser. Needs NiiVue."><a href='' id='brainchop.js'><span class="button">Brainchop</span></a><span class="viewers">NiiVue</span><a href='' id='brainchop.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Chat with a language model that runs in your browser. Needs WebGPU and can take half a minute to appear."><a href='' id='webllm.js'><span class="button">LLM Chat</span></a><span class="viewers">needs WebGPU</span><a href='' id='webllm.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Drop a skin photo to classify it. Does not use the viewer."><a href='' id='melanoma.js'><span class="button">Melanoma</span></a><span class="viewers">no viewer needed</span><a href='' id='melanoma.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Shows the loaded surface mesh in augmented reality. Needs NiiVue with a mesh loaded and a webcam."><a href='' id='meshAR.js'><span class="button">Mesh AR</span></a><span class="viewers">NiiVue, webcam</span><a href='' id='meshAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Shows the loaded fiber tract in augmented reality. Needs NiiVue with a tract loaded and a webcam."><a href='' id='fibersAR.js'><span class="button">Fibers AR</span></a><span class="viewers">NiiVue, webcam</span><a href='' id='fibersAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Classifies a 2D photo loaded in NiiVue. Does not work on medical volumes."><a href='' id='CatVSDog.js'><span class="button">CatVSDog</span></a><span class="viewers">NiiVue, 2D photo</span><a href='' id='CatVSDog.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
       </div>
 
       <img src='gfx/2.png' class='imgtext'>

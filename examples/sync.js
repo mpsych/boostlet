@@ -1,3 +1,4 @@
+CATEGORY = "Collaboration"
 ;(function () {
   if (window.__boostlet_sync_injected) return
   window.__boostlet_sync_injected = true

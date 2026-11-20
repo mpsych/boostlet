@@ -5,7 +5,7 @@ script.onload = run;
 document.head.appendChild(script);
 eval(script);
 
-CATEGORY = "Filter"
+CATEGORY = "Hidden"
 
 function run() {
   
