@@ -1,3 +1,4 @@
+CATEGORY = "Collaboration"
 ;(function () {
   if (window.__boostlet_sync_injected) return
   window.__boostlet_sync_injected = true
@@ -5,12 +6,12 @@
   // ===== config =====
 
   const BOOSTLET_URL = 'https://boostlet.org/dist/boostlet.min.js'
-  const PUSHER_KEY = '1a1ef7128331ff9bbc00'
+  const PUSHER_KEY = '831ed99bd7a1e904c749'
   const PUSHER_CLUSTER = 'us2'
-  const PUSHER_AUTH_URL = 'https://boostlet-pusher-auth.bronsdonayden.workers.dev'
+  const PUSHER_AUTH_URL = 'https://boostlet-sync.mpsych.workers.dev'
   const ICE_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-  const DROPBOX_APP_KEY = '4ugn042y7wktv7t'
-  const DROPBOX_REDIRECT = 'https://bronsdonayden.github.io/boostlet/dropbox-callback.html'
+  const DROPBOX_APP_KEY = '3iucmciu34krlh9'
+  const DROPBOX_REDIRECT = 'https://boostlet.org/dropbox-callback.html'
 
   // ===== state =====
 
@@ -18,8 +19,12 @@
     nv: null, pusher: null, channel: null,
     peers: new Map(), selfId: null,
     last: {}, rafId: null, pollId: null,
-    dropboxToken: null, roomCode: null, sceneToken: null
+    dropboxToken: null, roomCode: null, sceneToken: null,
+    isHost: false
   }
+
+  // time of the last failed send warning so hints dont pile up
+  let lastSendWarning = 0
 
   // ===== latency measurement state =====
 
@@ -91,11 +96,7 @@
 
   window.__boostlet_sync_destroy = function () {
     if (state.pollId) clearInterval(state.pollId)
-    if (state.rafId) cancelAnimationFrame(state.rafId)
-    if (state.channel) state.channel.unbind_all()
-    if (state.pusher) state.pusher.disconnect()
-    state.peers.forEach(peer => { peer.channel?.close(); peer.conn.close() })
-    state.peers.clear()
+    leaveRoom()
     document.getElementById('__sync_panel')?.remove()
     window.__boostlet_sync_injected = false
   }
@@ -111,25 +112,34 @@
   if (window.Boostlet) waitForNv()
   else loadScript(BOOSTLET_URL, waitForNv)
 
+  // give up after 12 seconds like the other boostlets so a page without niivue says so
   function waitForNv() {
+    let tries = 0
     state.pollId = setInterval(() => {
+      let nv = null
       try {
         Boostlet.init()
-        if (Boostlet.framework.name !== 'niivue') return
-        const nv = Boostlet.framework.instance
-        if (!nv?.volumes) return
-        clearInterval(state.pollId); state.pollId = null
-        if (window.Pusher) start(nv)
-        else loadScript('https://js.pusher.com/8.4.0/pusher.min.js', () => start(nv))
+        if (Boostlet.framework.name === 'niivue' && Boostlet.framework.instance?.volumes) nv = Boostlet.framework.instance
       } catch (e) {}
+      if (!nv && ++tries <= 40) return
+      clearInterval(state.pollId); state.pollId = null
+      if (!nv) {
+        window.__boostlet_sync_injected = false
+        Boostlet.hint('Sync found no NiiVue viewer with a loaded volume', 5000)
+        return
+      }
+      if (window.Pusher) start(nv)
+      else loadScript('https://js.pusher.com/8.4.0/pusher.min.js', () => start(nv))
     }, 300)
   }
 
   function start(nv) {
     state.nv = nv
+    Boostlet.hint('Sync loaded', 2500)
     const code = new URLSearchParams(location.search).get('sync')
+    // everyone gets the panel and a share link joins right away
+    showPanel()
     if (code) joinScene(code)
-    else { showPanel(); hostScene() }
   }
 
   // ===== scene =====
@@ -154,7 +164,9 @@
       sliceType: nv.opts?.sliceType ?? 0,
       colormap: vol?.colormap ?? null,
       cal_min: vol?.cal_min ?? null,
-      cal_max: vol?.cal_max ?? null
+      cal_max: vol?.cal_max ?? null,
+      // 3d camera as azimuth elevation zoom and the three clip plane values
+      camera: [nv.scene?.renderAzimuth, nv.scene?.renderElevation, nv.scene?.volScaleMultiplier, ...(nv.scene?.clipPlaneDepthAziElev || [])]
     }
     if (!full) return snap
     return {
@@ -175,6 +187,13 @@
       nv.createOnLocationChange?.()
     }
     if (diff.sliceType !== undefined && nv.opts.sliceType !== diff.sliceType) nv.setSliceType?.(diff.sliceType)
+    // a partial or broken camera is ignored like a broken crosshair
+    if (diff.camera?.length === 6 && diff.camera.every(Number.isFinite)) {
+      const [azimuth, elevation, zoom, ...clip] = diff.camera
+      nv.setRenderAzimuthElevation?.(azimuth, elevation)
+      nv.setScale?.(zoom)
+      nv.setClipPlane?.(clip)
+    }
     const vol = nv.volumes?.[0]
     if (vol) {
       let dirty = false
@@ -208,19 +227,24 @@
 
   // ===== host and join =====
 
+  // runs from the host button click and must reach the dropbox popup without an await
+  // so the popup still counts as part of the click
   async function hostScene() {
+    leaveRoom()
     const code = makeCode()
     state.roomCode = code
-    const params = new URLSearchParams(location.search)
-    params.set('sync', code)
-    history.replaceState(null, '', `${location.pathname}?${params}${location.hash}`)
+    state.isHost = true
+    setSyncParam(code)
     updatePanel(code)
     connectToRoom(code)
     await publishScene(code, readScene(true))
   }
 
   async function joinScene(code) {
+    leaveRoom()
     state.roomCode = code
+    // show the code now so the host button is gone while the scene loads
+    updatePanel(code)
     let scene
     try {
       const res = await fetch(`${PUSHER_AUTH_URL}/scene/${code}`)
@@ -230,16 +254,20 @@
       }
     } catch (e) {}
 
-    if (!scene) { updatePanel(code); connectToRoom(code); return }
+    if (!scene) { setSyncParam(code); updatePanel(code); connectToRoom(code); return }
 
+    // only follow https pages so a scene cant send a javascript url
     if (scene.originUrl && !isSamePage(scene.originUrl, location.href)) {
-      const target = new URL(scene.originUrl)
+      let target
+      try { target = new URL(scene.originUrl) } catch (e) { target = null }
+      if (!target || target.protocol !== 'https:') { Boostlet.hint('scene has an invalid page url', 4000); return }
       target.searchParams.set('sync', code)
       location.href = target.toString()
       return
     }
 
     await applyScene(scene)
+    setSyncParam(code)
     updatePanel(code)
     if (scene.activeBoostlets?.length) promptBoostlets(scene.activeBoostlets)
     connectToRoom(code)
@@ -258,6 +286,24 @@
       const data = await res.json()
       if (data.token) state.sceneToken = data.token
     } catch (e) {}
+  }
+
+  // leave the current room before hosting or joining another so only one stays open
+  function leaveRoom() {
+    if (state.rafId) cancelAnimationFrame(state.rafId)
+    if (state.channel) state.channel.unbind_all()
+    if (state.pusher) state.pusher.disconnect()
+    state.peers.forEach(peer => { peer.channel?.close(); peer.conn.close() })
+    state.peers.clear()
+    state.rafId = state.pusher = state.channel = state.selfId = state.sceneToken = null
+    state.isHost = false
+  }
+
+  // keep the room code in the address bar so the page address is the share link
+  function setSyncParam(code) {
+    const params = new URLSearchParams(location.search)
+    params.set('sync', code)
+    history.replaceState(null, '', `${location.pathname}?${params}${location.hash}`)
   }
 
   // 10 chars from a crypto source so room codes cant be guessed
@@ -343,6 +389,11 @@
   async function dropboxAuth() {
     if (state.dropboxToken) return state.dropboxToken
 
+    // open the popup before any await so it still belongs to the click
+    // safari blocks a popup that opens after the click handler returned
+    const popup = window.open('about:blank', 'dropbox_auth', 'width=500,height=700')
+    if (!popup) { Boostlet.hint('popup blocked by browser', 4000); return null }
+
     const verifier = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('')
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
     const challenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
@@ -353,8 +404,7 @@
       + '&code_challenge_method=S256&redirect_uri=' + encodeURIComponent(DROPBOX_REDIRECT)
       + '&token_access_type=online'
 
-    const popup = window.open(authUrl, 'dropbox_auth', 'width=500,height=700')
-    if (!popup) { Boostlet.hint('popup blocked by browser', 4000); return null }
+    popup.location.href = authUrl
 
     const authCode = await new Promise(resolve => {
       const onMsg = e => { if (e.data?.type === 'dropbox-auth') { window.removeEventListener('message', onMsg); resolve(e.data.code) } }
@@ -393,7 +443,8 @@
     d.setFloat32(108, 352, true)
     d.setFloat32(112, meta.scl_slope || 1, true)
     d.setFloat32(116, meta.scl_inter || 0, true)
-    d.setInt16(252, meta.qform_code || 1, true)
+    // only the sform rows are written below so the file must not claim a qform
+    d.setInt16(252, 0, true)
     d.setInt16(254, meta.sform_code || 1, true)
     if (meta.affine) {
       let k = 0
@@ -434,9 +485,11 @@
       else getPeer(m.id, false)
     })
     channel.bind('pusher:member_removed', m => removePeer(m.id))
-    channel.bind('client-offer', d => { if (d.to === state.selfId) handleOffer(d.from, d.payload) })
-    channel.bind('client-answer', d => { if (d.to === state.selfId) handleAnswer(d.from, d.payload) })
-    channel.bind('client-ice', d => { if (d.to === state.selfId) handleIce(d.from, d.payload) })
+    // pusher adds the real sender id on presence channels so a peer cant sign as someone else
+    const senderOf = (d, meta) => meta?.user_id || d.from
+    channel.bind('client-offer', (d, meta) => { if (d.to === state.selfId) handleOffer(senderOf(d, meta), d.payload) })
+    channel.bind('client-answer', (d, meta) => { if (d.to === state.selfId) handleAnswer(senderOf(d, meta), d.payload) })
+    channel.bind('client-ice', (d, meta) => { if (d.to === state.selfId) handleIce(senderOf(d, meta), d.payload) })
 
     startBroadcasting()
   }
@@ -448,6 +501,7 @@
   function startBroadcasting() {
     const last = state.last
     let lastCrosshairBroadcast = 0
+    let lastCameraBroadcast = 0
     const tick = () => {
       state.rafId = requestAnimationFrame(tick)
       const cur = readScene(false)
@@ -455,6 +509,8 @@
       const patch = {}
       const crosshairChanged = cur.crosshairPos && (!last.crosshairPos || cur.crosshairPos.some((v, i) => v !== last.crosshairPos[i]))
       if (crosshairChanged && now - lastCrosshairBroadcast >= 33) { patch.crosshairPos = cur.crosshairPos; last.crosshairPos = cur.crosshairPos; lastCrosshairBroadcast = now }
+      const cameraChanged = !last.camera || cur.camera.some((v, i) => v !== last.camera[i])
+      if (cameraChanged && now - lastCameraBroadcast >= 33) { patch.camera = cur.camera; last.camera = cur.camera; lastCameraBroadcast = now }
       if (cur.sliceType !== last.sliceType) { patch.sliceType = cur.sliceType; last.sliceType = cur.sliceType }
       if (cur.colormap !== last.colormap) { patch.colormap = cur.colormap; last.colormap = cur.colormap }
       if (cur.cal_min !== last.cal_min || cur.cal_max !== last.cal_max) { patch.cal_min = cur.cal_min; patch.cal_max = cur.cal_max; last.cal_min = cur.cal_min; last.cal_max = cur.cal_max }
@@ -522,8 +578,15 @@
     peer.channel = channel
 
     channel.onopen = async () => {
+      // the host sends its whole view once so a late joiner starts where the host is
+      // after that only changes are sent
+      if (state.isHost) {
+        try { channel.send(JSON.stringify({ type: 'scene-patch', patch: readScene(false) })) } catch (e) {}
+      }
       const hash = await hashVolume()
       try { channel.send(JSON.stringify({ type: 'hash-hello', hash })) } catch (e) {}
+      // lets boostlets exchange their own state with the new peer
+      routeMessage({ type: 'sync-peer-open' }, peerId)
     }
 
     channel.onmessage = e => {
@@ -556,6 +619,10 @@
         return
       }
       if (msg.type === 'volume-ready' && msg.volumeUrl) {
+        // only load volumes shared through dropbox
+        let host = ''
+        try { host = new URL(msg.volumeUrl).hostname } catch (e) {}
+        if (!/(^|\.)dropbox(usercontent)?\.com$/.test(host)) return
         // always load the dropbox volume regardless of whether a volume is already present
         Boostlet.hint('loading volume from dropbox', 3000)
         state.nv.loadVolumes([{ url: msg.volumeUrl }]).then(() => {
@@ -563,7 +630,9 @@
         }).catch(() => Boostlet.hint('could not load volume from dropbox', 4000))
         return
       }
-      routeMessage(msg)
+      // this name is only ever raised locally when a channel opens
+      if (msg.type === 'sync-peer-open') return
+      routeMessage(msg, peerId)
     }
 
     channel.onclose = () => { if (peer.channel === channel) peer.channel = null }
@@ -571,7 +640,16 @@
 
   function broadcast(msg) {
     const str = JSON.stringify(msg)
-    state.peers.forEach(peer => { if (peer.channel?.readyState === 'open') try { peer.channel.send(str) } catch (e) {} })
+    let failed = 0
+    state.peers.forEach(peer => {
+      if (peer.channel?.readyState !== 'open') { failed++; return }
+      try { peer.channel.send(str) } catch (e) { failed++ }
+    })
+    // viewer moves repeat many times a second so only boostlet messages warn
+    if (failed && msg.type !== 'scene-patch' && Date.now() - lastSendWarning > 3000) {
+      lastSendWarning = Date.now()
+      Boostlet.hint(`sync could not reach ${failed} of ${state.peers.size} peers`, 3000)
+    }
   }
 
   function removePeer(peerId) {
@@ -592,9 +670,10 @@
     if (idx !== -1) window.__boostlet_active[idx] = entry
     else window.__boostlet_active.push(entry)
   }
-  function routeMessage(msg) {
+  // peerId is the connection the message arrived on
+  function routeMessage(msg, peerId) {
     if (!msg?.type) return
-    for (const entry of window.__boostlet_active) if (typeof entry.onMessage === 'function') entry.onMessage(msg)
+    for (const entry of window.__boostlet_active) if (typeof entry.onMessage === 'function') entry.onMessage(msg, peerId)
   }
 
   // ===== ui =====
@@ -615,8 +694,13 @@
     panel.id = '__sync_panel'
     const close = el('button', 'position:absolute;top:6px;right:8px;background:none;border:none;color:#666;font-size:14px;cursor:pointer', '×')
     close.onclick = () => panel.remove()
-    const status = el('div', 'font-size:11px;color:#666', 'starting...')
+    // the host button sits where the room code goes and is replaced by it
+    // hosting opens the dropbox sign in so it has to start from this click
+    const status = el('div', 'font-size:11px;color:#666')
     status.id = '__sync_status'
+    const hostBtn = el('button', `${BTN};background:#1a3a1a;color:#8c8;border:1px solid #4a4`, 'host')
+    hostBtn.onclick = () => { hostBtn.disabled = true; hostScene() }
+    status.append(hostBtn)
     const input = el('input', 'background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:4px 6px;font-family:monospace;font-size:12px;width:100px;outline:none')
     input.placeholder = 'room code'; input.maxLength = 10
     const joinBtn = el('button', `${BTN};background:#1a3a6a;color:#fff`, 'join')
@@ -624,7 +708,7 @@
       const code = input.value.trim().toLowerCase()
       if (!code) return
       joinBtn.disabled = true
-      joinScene(code).catch(() => { joinBtn.disabled = false })
+      joinScene(code).finally(() => { joinBtn.disabled = false })
     }
     input.onkeydown = e => { if (e.key === 'Enter') joinBtn.click() }
     const row = el('div', 'display:flex;gap:6px')
@@ -636,14 +720,18 @@
   function updatePanel(code) {
     const status = document.getElementById('__sync_status')
     if (!status) return
-    const shareUrl = `${location.origin}${location.pathname}?sync=${code}`
+    // the full address keeps the page state in the query so the link opens the same view
+    const shareUrl = location.href
     const copyBtn = el('button', `${BTN};background:#1a3a1a;color:#8c8;border:1px solid #4a4`, 'copy link')
     copyBtn.onclick = () => navigator.clipboard.writeText(shareUrl).then(() => { copyBtn.textContent = 'copied'; setTimeout(() => { copyBtn.textContent = 'copy link' }, 1500) })
     const codeRow = el('div', 'display:flex;align-items:center;gap:8px')
     codeRow.append(el('span', 'color:#4a4;letter-spacing:.1em;font-size:13px', code), copyBtn)
     const row = el('div', 'display:flex;flex-direction:column;gap:6px')
+    // same id so a later host or join replaces this row again
+    row.id = '__sync_status'
     row.append(codeRow)
-    if (DROPBOX_APP_KEY) {
+    // only the host shares a volume
+    if (DROPBOX_APP_KEY && state.isHost) {
       const btn = el('button', `${BTN};background:#0061fe;color:#fff;margin-top:2px`, 'save volume to dropbox')
       btn.onclick = async () => { btn.disabled = true; btn.textContent = 'uploading...'; await uploadVolumeToDropbox(); btn.disabled = false; btn.textContent = 'save volume to dropbox' }
       row.append(btn)
@@ -652,7 +740,8 @@
   }
 
   function promptBoostlets(boostlets) {
-    const missing = boostlets.filter(b => !(window.__boostlet_active || []).find(a => a.name === b.name))
+    // only offer boostlets that load from the boostlet repo or site
+    const missing = boostlets.filter(b => isTrustedBoostlet(b.url) && !(window.__boostlet_active || []).find(a => a.name === b.name))
     if (!missing.length) return
     const prompt = el('div', 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:2147483647;background:#111;border:1.5px solid #444;border-radius:8px;padding:12px 16px;font-family:monospace;font-size:12px;color:#ccc;box-shadow:0 4px 16px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:8px;max-width:320px')
     prompt.append(el('div', 'font-size:11px;color:#888', 'host has these boostlets active'))
@@ -671,6 +760,15 @@
   }
 
   // ===== utils =====
+
+  function isTrustedBoostlet(url) {
+    try {
+      const u = new URL(url)
+      if (u.protocol !== 'https:') return false
+      if (u.hostname === 'boostlet.org') return true
+      return u.hostname === 'raw.githubusercontent.com' && u.pathname.startsWith('/mpsych/boostlet/')
+    } catch (e) { return false }
+  }
 
   // query params count too (minus sync) since single page viewers like slicedrop
   // keep what is loaded in the query string, not the path

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Papaya validation viewer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rii-mango/Papaya@master/release/current/standard/papaya.css">
+  <script>
+    // the volume comes from the url so each validation file is its own link
+    // for example viewer.html?file=var_ASL.nii.gz
+    var file = new URLSearchParams(location.search).get('file') || 'sub-003_ses-1_T1w.nii.gz';
+    var params = { images: ['/tests/validation/' + file] };
+  </script>
+  <script src="https://cdn.jsdelivr.net/gh/rii-mango/Papaya@master/release/current/standard/papaya.js"></script>
+  <!-- the local build so changes can be tested before they are pushed -->
+  <script src="/dist/boostlet.min.js"></script>
+</head>
+<body>
+  <div class="papaya" data-params="params"></div>
+  <p style="font-family:monospace">
+    <button onclick="load('roiStats.js')">ROI Stats</button>
+    <button onclick="load('PixelExplorer.js')">PixelExplorer</button>
+    <span id="file"></span>
+  </p>
+  <script>
+    document.getElementById('file').textContent = file;
+    function load(name) {
+      var s = document.createElement('script');
+      s.src = '/examples/' + name + '?' + Date.now();
+      document.head.appendChild(s);
+    }
+  </script>
+</body>
+</html>

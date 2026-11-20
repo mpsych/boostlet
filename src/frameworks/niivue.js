@@ -19,6 +19,34 @@ export class NiiVue extends Framework {
     this.x2 = null;
     this.y2 = null;
 
+    // remember which panel was clicked last so multiplanar has a current plane
+    // kept on the niivue instance because every Boostlet.init makes a new adapter
+    if (instance.__boostletPlane === undefined) {
+      instance.__boostletPlane = 0;
+      const previous = instance.onLocationChange;
+      instance.onLocationChange = function(loc) {
+        if (loc && (loc.axCorSag === 0 || loc.axCorSag === 1 || loc.axCorSag === 2)) {
+          instance.__boostletPlane = loc.axCorSag;
+        }
+        if (previous) return previous.apply(this, arguments);
+      };
+    }
+
+  }
+
+  // plane the user is working in as 0 axial 1 coronal 2 sagittal
+  // a single plane view is its own answer
+  // in multiplanar it is the panel that was clicked last
+  // pass the location event when there is one so the answer is current
+  get_plane(loc) {
+    const nv = this.instance;
+    const view = nv.opts.sliceType;
+    if (view === 0 || view === 1 || view === 2) {
+      nv.__boostletPlane = view;
+    } else if (loc && (loc.axCorSag === 0 || loc.axCorSag === 1 || loc.axCorSag === 2)) {
+      nv.__boostletPlane = loc.axCorSag;
+    }
+    return nv.__boostletPlane;
   }
 
   get_image(from_canvas) {
@@ -73,7 +101,8 @@ export class NiiVue extends Framework {
       // set width and height accordingly
 
       let v =  this.instance.volumes[0];
-      let currentSlice = this.instance.opts.sliceType;
+      // in multiplanar this is the last clicked panel
+      let currentSlice = this.get_plane();
       let currentCrossHairPos = this.instance.scene.crosshairPos;
       
       
@@ -97,19 +126,13 @@ export class NiiVue extends Framework {
         start = [0, y_index, 0];
         end = [v.dims[1], y_index + 1 , v.dims[3]];
       }
-      else if(currentSlice == 2){
+      else {
         // sagittal, slice along X
         let x_index = Math.floor(currentCrossHairPos[0] * v.dims[1]);
         width = v.dims[2];
         height = v.dims[3];
         start = [x_index, 0, 0];
         end = [x_index + 1, v.dims[2], v.dims[3]];
-      }
-      else {
-        // multiplanar (sliceType 3), no single slice to extract,
-        // return the full volume
-        width = v.dims[1];
-        height = v.dims[2];
       }
 
       pixels = v.getVolumeData(start, end)[0];
@@ -122,10 +145,55 @@ export class NiiVue extends Framework {
 
 
 
+  has_volume() {
+    const v = this.instance.volumes;
+    return !!(v && v.length);
+  }
+
+  get_scaling() {
+    const v = this.instance.volumes[0];
+    return {
+      slope: v.hdr.scl_slope || 1,
+      inter: v.hdr.scl_inter || 0,
+      cal_min: v.cal_min,
+      cal_max: v.cal_max
+    };
+  }
+
+  // crosshairPos is a fraction along the ras axes
+  // floor matches how niivue maps it to a voxel
+  get_crosshair_vox() {
+    const pos = this.instance.scene.crosshairPos;
+    const v = this.instance.volumes[0];
+    const d = v.dimsRAS || v.dims;
+    return [0, 1, 2].map(i => Math.min(Math.floor(pos[i] * d[i + 1]), d[i + 1] - 1));
+  }
+
+  // radiological view mirrors left and right in axial and coronal
+  // sagittalNoseLeft mirrors sagittal
+  get_display_flip(plane) {
+    const o = this.instance.opts || {};
+    if (plane === 2) return { x: !!o.sagittalNoseLeft, y: false };
+    return { x: !!o.isRadiologicalConvention, y: false };
+  }
+
+  // niivue already sends vox in ras and the clicked panel as axCorSag
+  // the handler that was there keeps running first
+  on_location_change(cb) {
+    const nv = this.instance;
+    const previous = nv.onLocationChange;
+    nv.onLocationChange = function(loc) {
+      if (previous) previous.apply(this, arguments);
+      cb(loc);
+    };
+  }
+
   get_subvolume(start, end) {
     const v = this.instance.volumes[0];
     // getVolumeData returns nothing if a coord is negative
-    const last = [v.dims[1] - 1, v.dims[2] - 1, v.dims[3] - 1];
+    // coords are in ras order so clamp to the ras dims not the stored ones
+    const d = v.dimsRAS || v.dims;
+    const last = [d[1] - 1, d[2] - 1, d[3] - 1];
     const clamp = (p, i) => Math.min(Math.max(0, Math.round(p)), last[i]);
     const [data, dims] = v.getVolumeData(start.map(clamp), end.map(clamp));
     return { data, dims };
@@ -133,12 +201,11 @@ export class NiiVue extends Framework {
 
   get_dims(){
     const v = this.instance.volumes[0];
-    const currentSlice = this.instance.opts.sliceType;
+    const currentSlice = this.get_plane();
 
     if(currentSlice == 0) return [v.dims[1], v.dims[2], 1]; //axial
     if(currentSlice == 1 ) return [v.dims[1], v.dims[3], 1 ]; // coronal
-    if(currentSlice == 2) return [v.dims[2], v.dims[3], 1 ]; // saggital
-    return [v.dims[1], v.dims[2], 1]; // multiplanar fallback
+    return [v.dims[2], v.dims[3], 1 ]; // saggital
   }  
 
   /**

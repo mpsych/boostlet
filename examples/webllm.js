@@ -2,31 +2,34 @@ CATEGORY = "ML"
 
 script = document.createElement("script");
 script.type = "text/javascript";
-//script.src = "https://boostlet.org/dist/boostlet.min.js";
+script.src = "https://boostlet.org/dist/boostlet.min.js";
 // script.src = "http://localhost:5500/dist/boostlet.min.js";
-script.src = "https://gaiborjosue.github.io/boostlet/dist/boostlet.min.js";
+// script.src = "https://gaiborjosue.github.io/boostlet/dist/boostlet.min.js";
 
 script.onload = run;
-document.head.appendChild(script);
-eval(script);
+script.onerror = function() { alert('LLM Chat could not load Boostlet'); };
+// skip loading boostlet again when the page already has it
+if (window.Boostlet) run(); else document.head.appendChild(script);
 
 async function run() {
   // detect visualization framework
   Boostlet.init();
 
-  const script = document.createElement("script");
-  script.type = "module";
-  script.src = "https://mpsych.github.io/cdn/web-llm/web-llm-cdn.js";
-  document.head.appendChild(script);
+  // the chat library is large so the panel can take half a minute
+  Boostlet.hint('LLM Chat loading, this can take 30 seconds', 5000);
 
-  script.onload = async () => {
-    // Import the module
-    const module = await import(script.src);
-    window.webllm = module;
-    const chatUI = new ChatUI();
-    chatUI.setupChatUI();
-    chatUI.populateModelSelector();
-  };
+  // current web-llm, pinned; the old bundle called adapter.requestAdapterInfo, which Chrome removed
+  import("https://esm.run/@mlc-ai/web-llm@0.2.85").then((module) => {
+    try {
+      window.webllm = module;
+      const chatUI = new ChatUI();
+      chatUI.setupChatUI();
+      chatUI.populateModelSelector();
+      Boostlet.hint('LLM Chat loaded, pick a model to start', 3000);
+    } catch (e) {
+      Boostlet.hint('LLM Chat failed: ' + e.message, 5000);
+    }
+  }).catch(() => Boostlet.hint('LLM Chat could not load its library', 5000));
 }
 
 class ChatUI {
@@ -203,9 +206,8 @@ class ChatUI {
       const initProgressCallback = (report) => {
         this.showProgress(report.text);
       };
-      this.engine = await webllm.CreateEngine(selectedModel, {
+      this.engine = await webllm.CreateMLCEngine(selectedModel, {
         initProgressCallback,
-        useWebWorker: true,
       });
 
       window.engine = this.engine;
@@ -303,4 +305,3 @@ class ChatUI {
     }
   }
 }
-

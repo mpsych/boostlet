@@ -32,7 +32,12 @@ export class Boostlet {
 
     if (this.framework) {
 
-      console.log('Found', this.framework.name, '!')
+      // plugins call init again and again while they wait for a viewer
+      // so only log when the detected framework changes
+      if (this.framework.name !== this.last_found) {
+        console.log('Found', this.framework.name, '!')
+        this.last_found = this.framework.name;
+      }
     
     } else {
 
@@ -114,8 +119,38 @@ export class Boostlet {
     return this.framework.get_dims();
   }
 
+  /**
+   * Gets the plane the user is working in: 0 axial, 1 coronal, 2 sagittal.
+   * Pass the location event if there is one.
+   */
+  get_plane(loc) {
+    return this.framework.get_plane(loc);
+  }
+
   get_subvolume(start, end) {
     return this.framework.get_subvolume(start, end);
+  }
+
+  // the methods below let one plugin read voxels on any viewer that implements them
+
+  has_volume() {
+    return !!(this.framework && this.framework.has_volume());
+  }
+
+  get_scaling() {
+    return this.framework.get_scaling();
+  }
+
+  get_crosshair_vox() {
+    return this.framework.get_crosshair_vox();
+  }
+
+  on_location_change(cb) {
+    return this.framework.on_location_change(cb);
+  }
+
+  get_display_flip(plane) {
+    return this.framework.get_display_flip ? this.framework.get_display_flip(plane) : { x: false, y: false };
   }
 
   /**

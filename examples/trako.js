@@ -1,16 +1,21 @@
-CATEGORY = "Filter"
+CATEGORY = "Hidden"
 
 script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
-script.onload = run;
-document.head.appendChild(script);
-eval(script);
+script.onload = function() {
+  run().catch(function(e) { Boostlet.hint('Trako failed: ' + e.message, 5000); });
+};
+script.onerror = function() { alert('Trako could not load Boostlet'); };
+// skip loading boostlet again when the page already has it
+if (window.Boostlet) script.onload(); else document.head.appendChild(script);
 
 //
 // THIS ONLY WORKS WITH NIIVUE RIGHT NOW
 //
 async function run() {
+
+  Boostlet.hint('Trako loading', 2000);
   
   // load example fiber (very small and fast)
   // we need it as a NVMesh template
@@ -58,6 +63,7 @@ function lib_load_callback() {
     container.innerHTML = 'Drop your TKO file here!<br><br><img src="https://bostongfx.github.io/TRAKO/WEB/gfx/tko.png">';
     window.document.body.appendChild(container);
     container.addEventListener("drop", onDrop, false);
+    Boostlet.hint('Trako loaded, drop a .tko file on the box', 3000);
     container.addEventListener("dragover", function(e) {
 
       container.style.color = 'red'; 

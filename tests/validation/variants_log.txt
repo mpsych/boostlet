@@ -1,0 +1,12 @@
+﻿original int16 (160, 256, 256) slope 0.019699396565556526 inter 645.5098266601562 RAS qform code 1 sform code 1
+largest qform sform difference 4.399106586783219e-06
+var_float32.nii.gz float32 (160, 256, 256) slope 1.0 inter 0.0 RAS max round trip error 0.0
+var_int16.nii.gz int16 (160, 256, 256) slope 0.019699396565556526 inter 645.5098266601562 RAS max round trip error 5.632266402244568e-05
+var_uint8.nii.gz uint8 (160, 256, 256) slope 5.062745094299316 inter 0.0 RAS max round trip error 2.5215492248535156
+var_inter.nii.gz int16 (160, 256, 256) slope 0.05000000074505806 inter -100.0 RAS max round trip error 0.02501806616783142
+var_LAS.nii.gz int16 (160, 256, 256) slope 0.019699396565556526 inter 645.5098266601562 LAS max round trip error 5.632266402244568e-05
+var_LAS.nii.gz world lookup error 3.0083581805229187e-05
+var_PIR.nii.gz int16 (256, 256, 160) slope 0.019699396565556526 inter 645.5098266601562 PIR max round trip error 5.632266402244568e-05
+var_PIR.nii.gz world lookup error 3.0083581805229187e-05
+var_ASL.nii.gz int16 (256, 256, 160) slope 0.019699396565556526 inter 645.5098266601562 ASL max round trip error 5.632266402244568e-05
+var_ASL.nii.gz world lookup error 3.0083581805229187e-05

@@ -2,8 +2,9 @@ script = document.createElement("script");
 script.type = "text/javascript";
 script.src = "https://boostlet.org/dist/boostlet.min.js";
 script.onload = run;
-document.head.appendChild(script);
-eval(script);
+script.onerror = function() { alert('Fibers AR could not load Boostlet'); };
+// skip loading boostlet again when the page already has it
+if (window.Boostlet) run(); else document.head.appendChild(script);
 
 CATEGORY = "Visualization";
 
@@ -13,13 +14,22 @@ function run() {
   Boostlet.init();
 
   if (Boostlet.framework.name != 'niivue') {
-    alert('Only niivue is supported right now :(');
+    Boostlet.hint('Fibers AR found no NiiVue viewer', 5000);
     return;
   }
 
+  const meshes = Boostlet.framework.instance.meshes;
+  if (!meshes || !meshes.length) {
+    Boostlet.hint('Load a mesh or fiber tract first', 4000);
+    return;
+  }
+
+  Boostlet.hint('Fibers AR loading', 2000);
   Boostlet.load_script("https://aframe.io/releases/1.3.0/aframe.min.js", function() {
 
     Boostlet.load_script("https://raw.githack.com/AR-js-org/AR.js/dev/aframe/build/aframe-ar.js", function() {
+
+      Boostlet.hint('Fibers AR loaded, allow the webcam and show it the Hiro marker', 5000);
 
       const scene = document.createElement('a-scene');
       scene.setAttribute('embedded', '');

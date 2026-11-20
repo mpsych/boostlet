@@ -1,130 +1,121 @@
-const CATEGORY = "Visualization"
+// plain assignment since powerboost loads plugins as page scripts that share one scope
+CATEGORY = "Visualization"
 
 if (typeof window._PixelExplorerLoaded === 'undefined') {
 window._PixelExplorerLoaded = true;
 
 (function() {
 
-const script = document.createElement("script");
-script.type = "text/javascript";
-script.src = "https://boostlet.org/dist/boostlet.min.js";
-script.onload = function() {
-  /// wait for nv and volumes before calling init
-  // calling init too early means niivue won't be detected yet
-  var poll = setInterval(function() {
-    try {
-      Boostlet.init();
-      clearInterval(poll);
-      run();
-    } catch(e) {
-      // framework not ready yet keep polling
-    }
-  }, 300);
-};
-document.head.appendChild(script);
-
 const HALF = 4;
 
-function run() {
-  if (Boostlet.framework.name !== 'niivue') {
-    alert('Only niivue is supported right now :(');
-    return;
-  }
-
-  const nv = Boostlet.framework.instance;
-  setup(nv);
+// load boostlet once then wait for a viewer with a loaded volume
+if (window.Boostlet) {
+  waitForViewer();
+} else {
+  const script = document.createElement("script");
+  script.src = "https://boostlet.org/dist/boostlet.min.js";
+  script.onload = waitForViewer;
+  document.head.appendChild(script);
 }
 
-function setup(nv) {
+function waitForViewer() {
+  let tries = 0;
+  const poll = setInterval(function() {
+    try { Boostlet.init(); } catch(e) {}
+    // any viewer whose adapter can read voxels works so niivue and papaya both do
+    const ready = Boostlet.has_volume && Boostlet.has_volume();
+    if (!ready && ++tries <= 40) return;
+    clearInterval(poll);
+    if (ready) {
+      setup();
+      Boostlet.hint('PixelExplorer loaded on ' + Boostlet.framework.name, 2500);
+      return;
+    }
+    // init falls back to a plain canvas so no viewer after 12 seconds means there is none
+    // clearing the flag lets the bookmark be clicked again
+    delete window._PixelExplorerLoaded;
+    Boostlet.hint('PixelExplorer found no supported viewer with a loaded volume', 5000);
+  }, 300);
+}
+
+function setup() {
   // create the panel once
   plot();
 
-  // save the existing onLocationChange so we don't clobber it
-  const existingOnLocationChange = nv.onLocationChange;
-
-  // hook into location change — fires on every crosshair move / slice change
-  // fire once immediately so the panel is populated on load without requiring a click
+  // runs on every crosshair move and once now so the panel fills on load
   const triggerUpdate = function(loc) {
-    if (existingOnLocationChange) existingOnLocationChange(loc);
-
-    if (!nv.volumes || !nv.volumes.length) return;
+    if (!Boostlet.has_volume()) return;
 
     const v = [Math.round(loc.vox[0]), Math.round(loc.vox[1]), Math.round(loc.vox[2])];
 
     const start = [v[0] - HALF, v[1] - HALF, v[2] - HALF];
     const end   = [v[0] + HALF, v[1] + HALF, v[2] + HALF];
 
-    // collapse the axis perpendicular to the current slice to a single voxel
-    // 2 = sagittal (x axis), 1 = coronal (y axis), default axial (z axis)
-    const fixedAxis = nv.opts.sliceType === 2 ? 0
-                    : nv.opts.sliceType === 1  ? 1 : 2;
-    start[fixedAxis] = end[fixedAxis] = Math.round((start[fixedAxis] + end[fixedAxis]) / 2);
+    // boostlet knows the plane as 0 axial 1 coronal 2 sagittal
+    // in multiplanar that is the panel which was clicked last
+    const plane = Boostlet.get_plane(loc);
+
+    // collapse the axis perpendicular to that plane to a single voxel
+    // axial holds z and coronal holds y and sagittal holds x
+    const fixedAxis = 2 - plane;
+    start[fixedAxis] = end[fixedAxis] = v[fixedAxis];
 
     const { data, dims } = Boostlet.get_subvolume(start, end);
     if (data && dims) {
+      // the two axes that lie in the plane, first is drawn across and second up
+      const [ax, ay] = [0, 1, 2].filter(a => a !== fixedAxis);
+      // at a volume edge the block comes back clipped
+      // a negative start tells how many cells are missing on the low side
+      const skip = [Math.max(0, -start[ax]), Math.max(0, -start[ay])];
       const mc = document.getElementById('PixelExplorerCanvas');
-      if (mc) drawMatrix(data, dims, mc);
+      // match how this viewer draws the plane so the grid lines up with the panel
+      const flip = Boostlet.get_display_flip ? Boostlet.get_display_flip(plane) : { x: false, y: false };
+      if (mc) drawMatrix(data, dims[ax], dims[ay], skip, flip, mc);
     }
   };
 
-  nv.onLocationChange = triggerUpdate;
-
-  // make a loc object from current crosshair state so the panel fills immediately
-  const pos = nv.scene.crosshairPos;
-  const dims = nv.volumes[0].dims;
-  // floor matches how niivue maps crosshair position to a voxel
-  const initialVox = [
-    Math.min(Math.floor(pos[0] * dims[1]), dims[1] - 1),
-    Math.min(Math.floor(pos[1] * dims[2]), dims[2] - 1),
-    Math.min(Math.floor(pos[2] * dims[3]), dims[3] - 1)
-  ];
-  triggerUpdate({ vox: initialVox });
+  Boostlet.on_location_change(triggerUpdate);
+  triggerUpdate({ vox: Boostlet.get_crosshair_vox() });
 }
 
 // render voxel values as a labeled grayscale grid
-function drawMatrix(data, dims, mc) {
-  const nv = Boostlet.framework.instance;
-  const { cal_min, cal_max } = nv.volumes[0];
+// the grid is always 9 by 9 with the crosshair voxel in the middle
+// cells that fall outside the volume stay dark and unlabeled
+function drawMatrix(data, cols, rows, skip, flip, mc) {
+  // display value is raw times slope plus inter and the window maps cal_min to black
+  const { slope, inter, cal_min, cal_max } = Boostlet.get_scaling();
   const range = cal_max - cal_min || 1;
   const ctx = mc.getContext('2d');
 
-  // apply nifti slope/intercept to convert raw values to display values.
-  // raw voxel values can be stored in arbitrary units (e.g. large negatives like -9000)
-  // and need to be scaled to match what NiiVue actually displays: display_value = raw * slope + inter
-  const slope = nv.volumes[0].hdr.scl_slope || 1;
-  const inter = nv.volumes[0].hdr.scl_inter || 0;
+  const N = HALF * 2 + 1;
+  const cell = Math.floor(mc.width / N);
 
-  // getVolumeData returns dims as X Y Z and the collapsed axis has size 1
-  // the first non-1 dim is cols, second is rows
-  const [cols, rows] = dims.filter(d => d > 1);
-  if (!cols || !rows) return;
+  // narrow intensity ranges need decimals or every label reads 0 or 1
+  const decimals = range >= 100 ? 0 : range >= 10 ? 1 : 2;
 
-  const cell = Math.floor(Math.min(mc.width / cols, mc.height / rows));
-  if (cell < 1) return;
+  ctx.font = `${Math.max(Math.floor(cell * 0.28), 6)}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-  const showLabels = cell >= 8;
-  if (showLabels) {
-    ctx.font = `${Math.max(Math.floor(cell * 0.28), 6)}px monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-  }
-
-  ctx.clearRect(0, 0, mc.width, mc.height);
+  ctx.fillStyle = '#301818';
+  ctx.fillRect(0, 0, mc.width, mc.height);
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const raw = data[c + (rows - 1 - r) * cols];
-      const val = raw * slope + inter;
+      const val = data[c + r * cols] * slope + inter;
       const norm = (val - cal_min) / range;
       const g = Math.round(norm * 255);
 
-      ctx.fillStyle = `rgb(${g},${g},${g})`;
-      ctx.fillRect(c * cell, r * cell, cell, cell);
+      // row 0 of the data is the bottom of the grid unless the viewer draws it the other way
+      const gx = c + skip[0], gy = r + skip[1];
+      const x = (flip.x ? N - 1 - gx : gx) * cell;
+      const y = (flip.y ? gy : N - 1 - gy) * cell;
 
-      if (showLabels) {
-        ctx.fillStyle = norm > 0.55 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
-        ctx.fillText(val.toFixed(0), c * cell + cell / 2, r * cell + cell / 2);
-      }
+      ctx.fillStyle = `rgb(${g},${g},${g})`;
+      ctx.fillRect(x, y, cell, cell);
+
+      ctx.fillStyle = norm > 0.55 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
+      ctx.fillText(val.toFixed(decimals), x + cell / 2, y + cell / 2);
     }
   }
 }

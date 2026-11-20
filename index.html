@@ -51,6 +51,10 @@
     }
 
     .button {
+      display: inline-block;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
       background-color: white;
       color: black;
       border: 2px solid black;
@@ -64,6 +68,86 @@
     .button:hover {
         background-color: black;
         color: white;
+    }
+
+    /* equal cards, four per row, two on narrow screens */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px 14px;
+      margin-bottom: 30px;
+    }
+
+    .gallery .tip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .gallery .tip > a:first-child {
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .gallery .button {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 56px;
+      padding: 8px 6px;
+      font-size: 18px;
+    }
+
+    /* outside the link so a dragged bookmark is named just the plugin */
+    .gallery .viewers {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      color: #444;
+    }
+
+    @media (max-width: 700px) {
+      .gallery { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .tip {
+        position: relative;
+    }
+
+    .tip::after {
+        content: attr(data-tip);
+        position: absolute;
+        left: 100%;
+        top: 0;
+        margin-left: 10px;
+        width: 210px;
+        padding: 8px 10px;
+        background-color: #111;
+        color: white;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: normal;
+        line-height: 1.4;
+        text-align: left;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 2000;
+    }
+
+    .tip:hover::after {
+        opacity: 1;
+    }
+
+    /* set on hover when the left side has the room */
+    .tip.left::after {
+        left: auto;
+        right: 100%;
+        margin-left: 0;
+        margin-right: 10px;
     }
 
     .logo {
@@ -183,32 +267,45 @@
   </style>
   <script type="text/javascript">
 
-    function setup_boostlet_button(id, url) {
+    function setup_boostlet_button(id, url, label) {
 
         var link = document.getElementById(id);
 
         // fetch fresh on every click so updates are picked up without re-dragging
-        var fetcher = '(function(){fetch("' + url + '?_="+Date.now()).then(function(r){return r.text()}).then(function(c){eval(c)})})();';
+        // a small note shows that the plugin is loading and says so if it fails
+        var fetcher = '(function(){'
+          + 'var n=document.createElement("div");n.textContent="loading ' + label + '...";'
+          + 'n.style.cssText="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:2147483647;background:#111;color:#fff;font:13px monospace;padding:8px 14px;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.5)";'
+          + 'document.body.appendChild(n);'
+          + 'function done(m){if(m)n.textContent=m;setTimeout(function(){n.remove()},m?6000:1500)}'
+          + 'fetch("' + url + '?_="+Date.now())'
+          + '.then(function(r){if(!r.ok)throw new Error("could not load ' + label + ' ("+r.status+")");return r.text()})'
+          + '.then(function(c){(function(c){eval(c)})(c);done()})'
+          + '.catch(function(e){done(String(e&&e.message||e))})'
+          + '})();';
         link.href = 'javascript:' + encodeURIComponent(fetcher);
 
     }
 
     window.onload = function() {
 
-        var examples = ['sobel.js', 'segmentanything.js', 'imageCaptioning.js', 'meshAR.js', 'fibersAR.js', 'plotly.js', 'trako.js', 'melanoma.js', 'webllm.js', 'brainchop.js', 'CatVSDog.js', 'PixelExplorer.js', 'roiStats.js', 'numpyBoostlet.js', 'sync.js'];
+        var examples = ['PixelExplorer.js', 'roiStats.js', 'numpyBoostlet.js', 'sync.js', 'sobel.js', 'plotly.js', 'brainchop.js', 'meshAR.js', 'fibersAR.js', 'webllm.js', 'melanoma.js', 'CatVSDog.js'];
 
-        var baseurl = 'https://raw.githubusercontent.com/mpsych/boostlet/main/examples/';
+        // set this to the release tag once one exists so bookmarks load archived code
+        var version = 'main';
+
+        var baseurl = 'https://raw.githubusercontent.com/mpsych/boostlet/' + version + '/examples/';
 
 
         for (e in examples) {
 
             var current_example = examples[e];
 
-            setup_boostlet_button(current_example, baseurl+current_example);
+            setup_boostlet_button(current_example, baseurl+current_example, current_example.replace('.js', ''));
 
         }
 
-        var codeurl = 'https://github.com/mpsych/boostlet/blob/main/examples/';
+        var codeurl = 'https://github.com/mpsych/boostlet/blob/' + version + '/examples/';
 
         for (e in examples) {
 
@@ -220,8 +317,21 @@
 
         }
 
+        // open each description away from the other buttons, into the page margin
+        // unless that margin is too narrow for it, then open it the other way
+        document.querySelectorAll('.tip').forEach(function(tip) {
+            tip.addEventListener('mouseenter', function() {
+                var box = tip.getBoundingClientRect();
+                var roomLeft = box.left, roomRight = window.innerWidth - box.right;
+                var outward = (box.left + box.right) / 2 < window.innerWidth / 2 ? 'left' : 'right';
+                var room = outward == 'left' ? roomLeft : roomRight;
+                var side = room >= 240 ? outward : (roomLeft > roomRight ? 'left' : 'right');
+                tip.classList.toggle('left', side == 'left');
+            });
+        });
+
         // also setup POWERBOOST
-        setup_boostlet_button('powerboost.js', baseurl+'powerboost.js');
+        setup_boostlet_button('powerboost.js', baseurl+'powerboost.js', 'PowerBoost');
 
     }
 
@@ -250,53 +360,25 @@
       <img src='gfx/1new.png' class='imgtext'>
       
       <div class="buttons">
-        <div><a href='' id='powerboost.js'><button class="button" style='font-size:36px'>PowerBoost😎</button></a><br><div style='margin:2px'><a href='http://github.com/mpsych/powerboost' id='powerboost.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
+        <div><a href='' id='powerboost.js'><span class="button" style='font-size:36px'>PowerBoost😎</span></a><br><div style='margin:2px'><a href='http://github.com/mpsych/powerboost' id='powerboost.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
       </div>
 
       <!-- 2. Or select individual BOOSTLETs and drag them! -->
       <img src='gfx/1b.png' class='imgtext'>
-      <div class="buttons">
-
-        <div><a href='' id='segmentanything.js'><button id='segmentanything.js' class="button">Segment Anything</button></a><br><div style='margin:2px'><a href='' id='segmentanything.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        <div><a href='' id='sobel.js'><button class="button">Sobel Filter</button></a><br><div style='margin:2px'><a href='' id='sobel.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-         <div><a href='' id='imageCaptioning.js'><button id='imageCaptioning.js' class="button">Image Captioning </button></a><br><div style='margin:2px'><a href='' id='imageCaptioning.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
+      <div class="gallery">
+        <div class='tip' data-tip="Labeled 9x9 grid of the voxel values around the crosshair, in the plane you clicked. Works in NiiVue and Papaya."><a href='' id='PixelExplorer.js'><span class="button">Pixel Explorer</span></a><span class="viewers">NiiVue, Papaya</span><a href='' id='PixelExplorer.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Mean, standard deviation, minimum, maximum and quartiles of the 9x9 patch around the crosshair. Works in NiiVue and Papaya."><a href='' id='roiStats.js'><span class="button">ROI Stats</span></a><span class="viewers">NiiVue, Papaya</span><a href='' id='roiStats.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Code editor that reads and changes the volume with numpy-ts, a JavaScript version of NumPy, with one click undo."><a href='' id='numpyBoostlet.js'><span class="button">NumPy Editor</span></a><span class="viewers">NiiVue</span><a href='' id='numpyBoostlet.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Links viewers in real time: crosshair, view, 3D camera and the NumPy editor. Anyone with the room code can join."><a href='' id='sync.js'><span class="button">Sync</span></a><span class="viewers">NiiVue</span><a href='' id='sync.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Edge filter on the rendered image. Click the result to restore the viewer. Works with any supported viewer."><a href='' id='sobel.js'><span class="button">Sobel Filter</span></a><span class="viewers">any viewer</span><a href='' id='sobel.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Histogram of the pixels on screen. Works with any supported viewer."><a href='' id='plotly.js'><span class="button">Plotly Histogram</span></a><span class="viewers">any viewer</span><a href='' id='plotly.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Brain tissue segmentation that runs in the browser. Needs NiiVue."><a href='' id='brainchop.js'><span class="button">Brainchop</span></a><span class="viewers">NiiVue</span><a href='' id='brainchop.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Chat with a language model that runs in your browser. Needs WebGPU and can take half a minute to appear."><a href='' id='webllm.js'><span class="button">LLM Chat</span></a><span class="viewers">needs WebGPU</span><a href='' id='webllm.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Drop a skin photo to classify it. Does not use the viewer."><a href='' id='melanoma.js'><span class="button">Melanoma</span></a><span class="viewers">no viewer needed</span><a href='' id='melanoma.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Shows the loaded surface mesh in augmented reality. Needs NiiVue with a mesh loaded and a webcam."><a href='' id='meshAR.js'><span class="button">Mesh AR</span></a><span class="viewers">NiiVue, webcam</span><a href='' id='meshAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Shows the loaded fiber tract in augmented reality. Needs NiiVue with a tract loaded and a webcam."><a href='' id='fibersAR.js'><span class="button">Fibers AR</span></a><span class="viewers">NiiVue, webcam</span><a href='' id='fibersAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
+        <div class='tip' data-tip="Classifies a 2D photo loaded in NiiVue. Does not work on medical volumes."><a href='' id='CatVSDog.js'><span class="button">CatVSDog</span></a><span class="viewers">NiiVue, 2D photo</span><a href='' id='CatVSDog.js-code' target='_blank'><img src='gfx/badge.svg'></a></div>
       </div>
-      <div class="buttons">
-
-               <div><a href='' id='trako.js'><button id='trako.js' class="button">Trako (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='trako.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-               <div><a href='' id='brainchop.js'><button id='brainchop.js' class="button">Brainchop</button></a><br><div style='margin:2px'><a href='' id='brainchop.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-               <div><a href='' id='webllm.js'><button id='webllm.js' class="button">LLM Chat</button></a><br><div style='margin:2px'><a href='' id='webllm.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-               <div><a href='' id='melanoma.js'><button id='melanoma.js' class="button">Melanoma Predictor</button></a><br><div style='margin:2px'><a href='' id='melanoma.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        </div>
-        <div class="buttons">
-
-               <div><a href='' id='meshAR.js'><button id='meshAR.js' class="button">Mesh AR</button></a><br><div style='margin:2px'><a href='' id='meshAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-                <div><a href='' id='plotly.js'><button id='plotly.js' class="button">Plotly Histogram</button></a><br><div style='margin:2px'><a href='' id='plotly.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-               <div><a href='' id='CatVSDog.js'><button id='CatVSDog.js' class="button">CatVSDog</button></a><br><div style='margin:2px'><a href='' id='CatVSDog.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-               <div><a href='' id='fibersAR.js'><button id='fibersAR.js' class="button">Fibers AR</button></a><br><div style='margin:2px'><a href='' id='fibersAR.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        </div>
-        <div class="buttons">
-
-               <div><a href='' id='PixelExplorer.js'><button id='PixelExplorer.js' class="button">Pixel Explorer (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='PixelExplorer.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-               <div><a href='' id='roiStats.js'><button id='roiStats.js' class="button">ROI Stats (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='roiStats.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-               <div><a href='' id='numpyBoostlet.js'><button id='numpyBoostlet.js' class="button">NumPy Editor (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='numpyBoostlet.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-               <div><a href='' id='sync.js'><button id='sync.js' class="button">Sync (NiiVue only!)</button></a><br><div style='margin:2px'><a href='' id='sync.js-code' target='_blank'><img src='gfx/badge.svg'></a></div></div>
-
-        </div>
 
       <img src='gfx/2.png' class='imgtext'>
       <div class="websites">
@@ -370,7 +452,7 @@
       <img src='gfx/faq.png' style='width:100px'><br>
       <ol>
         <li class="question" onclick="toggleAnswer(1)">Which visualization frameworks are supported?</li>
-        <li class="answer" id="answer1">Currently <a href='https://cornerstonejs.org' target='_blank'>Cornerstone2D.js</a> and <a href='https://github.com/niivue/niivue' target='_blank'>NiiVue.js</a>. Others like <a href='https://cornerstonejs.org' target='_blank'>openseadragon.js, <a href='https://slicedrop.com' target='_blank'>slicedrop.com</a>, <a href='https://rii-mango.github.io/Papaya/' target='_blank'>Papaya</a> are in the works! <a href="http://brainchop.org">BrainChop</a> we are coming for you - j/k :))))</li>
+        <li class="answer" id="answer1">NiiVue, Papaya, Cornerstone2D, OpenSeadragon and XTK. PixelExplorer and ROI Stats run on NiiVue and Papaya. The NumPy Boostlet and Sync run on NiiVue.</li>
         <li class="question" onclick="toggleAnswer(2)">What can BOOSTLETs really do?</li>
         <li class="answer" id="answer2">Any processing with any library is possible! The examples above use plotly.js or ONNX.js. BOOSTLETs provide methods that allow data access and interaction across different frameworks through JS injection. This is all client-side, unless you send some requests to a server.</li>
         <li class="question" onclick="toggleAnswer(3)">Do the algorithms work on the real data?</li>
