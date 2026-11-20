@@ -136,9 +136,9 @@
     state.nv = nv
     Boostlet.hint('Sync loaded', 2500)
     const code = new URLSearchParams(location.search).get('sync')
-    // a share link joins right away and otherwise the panel waits for host or join
+    // everyone gets the panel and a share link joins right away
+    showPanel()
     if (code) joinScene(code)
-    else showPanel()
   }
 
   // ===== scene =====
@@ -242,6 +242,8 @@
   async function joinScene(code) {
     leaveRoom()
     state.roomCode = code
+    // show the code now so the host button is gone while the scene loads
+    updatePanel(code)
     let scene
     try {
       const res = await fetch(`${PUSHER_AUTH_URL}/scene/${code}`)
@@ -619,7 +621,7 @@
         // only load volumes shared through dropbox
         let host = ''
         try { host = new URL(msg.volumeUrl).hostname } catch (e) {}
-        if (!host.endsWith('dropboxusercontent.com') && !host.endsWith('dropbox.com')) return
+        if (!/(^|\.)dropbox(usercontent)?\.com$/.test(host)) return
         // always load the dropbox volume regardless of whether a volume is already present
         Boostlet.hint('loading volume from dropbox', 3000)
         state.nv.loadVolumes([{ url: msg.volumeUrl }]).then(() => {
@@ -727,7 +729,8 @@
     // same id so a later host or join replaces this row again
     row.id = '__sync_status'
     row.append(codeRow)
-    if (DROPBOX_APP_KEY) {
+    // only the host shares a volume
+    if (DROPBOX_APP_KEY && state.isHost) {
       const btn = el('button', `${BTN};background:#0061fe;color:#fff;margin-top:2px`, 'save volume to dropbox')
       btn.onclick = async () => { btn.disabled = true; btn.textContent = 'uploading...'; await uploadVolumeToDropbox(); btn.disabled = false; btn.textContent = 'save volume to dropbox' }
       row.append(btn)
