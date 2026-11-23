@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <title>Boostlet NiiVue 1.0</title>
+    <style>body{margin:0;background:#000} canvas{width:100vw;height:100vh;display:block}</style>
+  </head>
+  <body>
+    <canvas id="gl"></canvas>
+    <script src="js/local_example.js"></script>
+    <!--
+      Runs examples/<example>.js (default sobel) against NiiVue 1.0 and the LOCAL build (js/local_example.js).
+      ?bounds=x0,y0,x1,y1 draws NiiVue in part of the canvas (nv.setBounds); ?data=<url> picks the volume.
+    -->
+    <script type="module">
+      import NiiVue from 'https://cdn.jsdelivr.net/npm/@niivue/niivue@1.0.0-rc.237/dist/standalone/niivue.js'
+      const params = new URLSearchParams(location.search)
+      const nv = new NiiVue({ sliceType: 0 })
+      await nv.attachToCanvas(document.getElementById('gl'))
+      await nv.loadVolumes([{ url: params.get('data') ?? 'data/avf.nii.gz' }])
+      if (params.get('bounds')) nv.setBounds(params.get('bounds').split(',').map(Number))
+      window.nv = nv // boostlet detects window.nv; or pass it: Boostlet.init('niivue', nv)
+      loadLocalExample(params.get('example') ?? 'sobel')
+      setTimeout(() => { window.TESTCOMPLETED = true }, 5000)
+    </script>
+  </body>
+</html>

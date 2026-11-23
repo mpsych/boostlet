@@ -1,192 +1,42 @@
 /*
- * THIS IS EXCELLENT WORK FROM BRAINCHOP.ORG!!!
+ * Brain segmentation with @brainchop/mindgrab (brainchop.org MeshNet models, in wasm).
+ * NIfTI bytes in, NIfTI labels out, in native geometry; works with NiiVue 0.6 and 1.0.
+ * Loaded as a module by brainchop.js after Boostlet.init().
  */
 CATEGORY = 'Hidden';
-import("https://haehn.github.io/brainchop/brainchop-mainthread.js").then(({ runInference }) => {
-  import("https://haehn.github.io/brainchop/brainchop-parameters.js").then(({ inferenceModelsList, brainChopOpts }) => {
-    import("https://haehn.github.io/brainchop/brainchop-diagnostics.js").then(({ isChrome, localSystemDetails }) => {
-      // const worker = new Worker("https://haehn.github.io/brainchop/brainchop-webworker.js", {
-        // type: "module"
-      // });
 
+const MINDGRAB = 'https://cdn.jsdelivr.net/npm/@brainchop/mindgrab@0.1.20261029/dist/index.js';
+const { segment, MODELS } = await import(MINDGRAB);
 
-      async function ensureConformed() {
-        const nii = Boostlet.framework.instance.volumes[0];
-        let isConformed =
-          nii.dims[1] === 256 && nii.dims[2] === 256 && nii.dims[3] === 256;
-        if (
-          nii.permRAS[0] !== -1 ||
-          nii.permRAS[1] !== 3 ||
-          nii.permRAS[2] !== -2
-        ) {
-          isConformed = false;
-        }
-        if (isConformed) {
-          return;
-        }
-        const nii2 = await Boostlet.framework.instance.conform(nii, false);
-        await Boostlet.framework.instance.removeVolume(Boostlet.framework.instance.volumes[0]);
-        await Boostlet.framework.instance.addVolume(nii2);
-      }
-      async function closeAllOverlays() {
-        while (Boostlet.framework.instance.volumes.length > 1) {
-          await Boostlet.framework.instance.removeVolume(Boostlet.framework.instance.volumes[1]);
-        }
-      }
-      // brainchop sends a modal message when inference fails so show it
-      async function callbackUI(message, progressFrac, modalMessage) {
-        if (modalMessage) Boostlet.hint('Brainchop: ' + modalMessage, 6000);
-      }
-      async function callbackImg(img, opts, modelEntry) {
-          closeAllOverlays();
-          const overlayVolume = await Boostlet.framework.instance.volumes[0].clone();
-          overlayVolume.zeroImage();
-          overlayVolume.hdr.scl_inter = 0;
-          overlayVolume.hdr.scl_slope = 1;
-          overlayVolume.img = new Uint8Array(img);
-          const roiVolumes = await getUniqueValuesAndCounts(overlayVolume.img);
-          console.log(roiVolumes);
-          if (modelEntry.colormapPath) {
-            const cmap = await fetchJSON('https://haehn.github.io/brainchop/public/'+modelEntry.colormapPath);
-            const newLabels = await createLabeledCounts(roiVolumes, cmap["labels"]);
-            console.log(newLabels);
-            overlayVolume.setColormapLabel({
-              R: cmap["R"],
-              G: cmap["G"],
-              B: cmap["B"],
-              labels: newLabels,
-            });
-            // n.b. most models create indexed labels, but those without colormap mask scalar input
-            overlayVolume.hdr.intent_code = 1002; // NIFTI_INTENT_LABEL
-          } else {
-            let colormap = opts.atlasSelectedColorTable.toLowerCase();
-            const cmaps = Boostlet.framework.instance.colormaps();
-            if (!cmaps.includes(colormap)) {
-              colormap = "actc";
-            }
-            overlayVolume.colormap = colormap;
-          }
-          overlayVolume.opacity = 0.7;
-          await Boostlet.framework.instance.addVolume(overlayVolume);
-          Boostlet.hint('Brainchop done', 3000);
-        }
-        async function fetchJSON(fnm) {
-          const response = await fetch(fnm);
-          const js = await response.json();
-          return js;
-        }
-        async function getUniqueValuesAndCounts(uint8Array) {
-          // Use a Map to count occurrences
-          const countsMap = new Map();
+const fw = Boostlet.framework;
+const nv = fw.instance;
+const labelModels = Object.keys(MODELS).filter(m => MODELS[m].outputKind === 'labels');
+const model = prompt(`Segmentation model (${labelModels.join(', ')})`, 'mindmap');
 
-          for (let i = 0; i < uint8Array.length; i++) {
-            const value = uint8Array[i];
-            if (countsMap.has(value)) {
-              countsMap.set(value, countsMap.get(value) + 1);
-            } else {
-              countsMap.set(value, 1);
-            }
-          }
-
-          // Convert the Map to an array of objects
-          const result = Array.from(countsMap, ([value, count]) => ({
-            value,
-            count,
-          }));
-
-          return result;
-        }
-        async function createLabeledCounts(uniqueValuesAndCounts, labelStrings) {
-          let missingLabelStatus = '';
-          if (uniqueValuesAndCounts.length !== labelStrings.length) {
-            missingLabelStatus = "Failed to Predict Labels - "
-            console.error(
-              "Mismatch in lengths: uniqueValuesAndCounts has",
-              uniqueValuesAndCounts.length,
-              "items, but labelStrings has",
-              labelStrings.length,
-              "items.",
-            );
-          }
-
-          return labelStrings.map((label, index) => {
-            // Find the entry matching the current label index
-            const entry = uniqueValuesAndCounts.find(item => item.value === index);
-
-            // If an entry is found, append the count value with 'mm3', otherwise show 'Missing'
-            const countText = entry ? `${entry.count} mm3` : "Missing";
-
-            countText === "Missing"
-            ? missingLabelStatus += `${label}, ` : null;
-
-            return `${label}   ${countText}`;
-          });
-        }
-
-      // ACTION STARTS
-      closeAllOverlays();
-      ensureConformed();
-      const model = inferenceModelsList[1];
-      const opts = brainChopOpts;
-      // opts.rootURL should be the url without the query string
-      const urlParams = new URL(window.location.href);
-      // remove the query string
-      opts.rootURL = 'https://haehn.github.io/brainchop/public';//urlParams.origin + urlParams.pathname;
-      // if (workerCheck.checked) {
-      //   if (typeof chopWorker !== "undefined") {
-      //     console.log(
-      //       "Unable to start new segmentation: previous call has not completed",
-      //     );
-      //     return;
-      //   }
-      //   chopWorker = await new MyWorker({ type: "module" });
-      //   const hdr = {
-      //     datatypeCode: nv1.volumes[0].hdr.datatypeCode,
-      //     dims: nv1.volumes[0].hdr.dims,
-      //   };
-      //   const msg = {
-      //     opts,
-      //     modelEntry: model,
-      //     niftiHeader: hdr,
-      //     niftiImage: nv1.volumes[0].img,
-      //   };
-      //   chopWorker.postMessage(msg);
-      //   chopWorker.onmessage = function (event) {
-      //     const cmd = event.data.cmd;
-      //     if (cmd === "ui") {
-      //       if (event.data.modalMessage !== "") {
-      //         chopWorker.terminate();
-      //         chopWorker = undefined;
-      //       }
-      //       callbackUI(
-      //         event.data.message,
-      //         event.data.progressFrac,
-      //         event.data.modalMessage,
-      //         event.data.statData,
-      //       );
-      //     }
-      //     if (cmd === "img") {
-      //       chopWorker.terminate();
-      //       chopWorker = undefined;
-      //       callbackImg(event.data.img, event.data.opts, event.data.modelEntry);
-      //     }
-      //   };
-      // } else {
-        runInference(
-          opts,
-          model,
-          Boostlet.framework.instance.volumes[0].hdr,
-          Boostlet.framework.instance.volumes[0].img,
-          callbackImg,
-          callbackUI,
-        );
-      // }
-
-      // You can use runInference and other modules now
-      console.log("Inference environment ready");
-    });
-  });
-}).catch(function(e) {
-  Boostlet.hint('Brainchop could not load: ' + e.message, 5000);
-});
-
+if (labelModels.includes(model)) {
+  Boostlet.hint(`brainchop: running ${model}...`, 60000);
+  try {
+    while (nv.volumes.length > 1) await nv.removeVolume(fw.v1 ? 1 : nv.volumes[1]);
+    const input = await (fw.v1 ? nv.saveVolume({ volumeByIndex: 0, filename: '' }) : nv.saveImage({ filename: '', volumeByIndex: 0 }));
+    // worker: false, since a module worker can't start from the CDN inside someone else's page
+    const { image, backend, elapsedMs } = await segment(input, { model, worker: false });
+    const name = `${model}.nii`;
+    if (fw.v1) {
+      const colormap = nv.addColormap(`brainchop-${model}`, MODELS[model].colormap);
+      await nv.addVolume({ url: new File([image], name), colormap, opacity: 0.5 });
+    } else {
+      const labels = await nv.volumes[0].constructor.new(image, name); // NVImage.new
+      labels.setColormapLabel(MODELS[model].colormap);
+      labels.opacity = 0.5;
+      // addVolume then calls the host page's onImageLoaded, which may throw (e.g. a UI that expects one
+      // volume); our overlay is already in by then, so only a failure to add it counts
+      try { nv.addVolume(labels); } catch (e) { if (!nv.volumes.includes(labels)) throw e; }
+    }
+    document.getElementById('BoostletHint')?.remove();
+    Boostlet.hint(`brainchop ${model}: ${(elapsedMs / 1000).toFixed(1)} s on ${backend}`, 5000);
+  } catch (e) {
+    document.getElementById('BoostletHint')?.remove();
+    Boostlet.hint(`brainchop failed: ${e.message ?? e}`, 8000);
+    throw e;
+  }
+}

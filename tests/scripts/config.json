@@ -20,16 +20,18 @@
     "local": {
       "Niivue" : {
         "sobel": "http://127.0.0.1:5501/tests/niivue/sobel.html",
+        "sobel_v1": "http://127.0.0.1:5501/tests/niivue/v1.html",
+        "sobel_v1_bounds": "http://127.0.0.1:5501/tests/niivue/v1.html?bounds=0.5,0.5,1,1",
+        "pixelexplorer_v1": "http://127.0.0.1:5501/tests/niivue/v1.html?example=PixelExplorer",
+        "roistats_v1": "http://127.0.0.1:5501/tests/niivue/v1.html?example=roiStats",
         "plotly" : "http://127.0.0.1:5501/tests/niivue/plotly.html",
-        "segmentanything" : "http://127.0.0.1:5501/tests/niivue/segmentanything.html",
         "subvolume" : "http://127.0.0.1:5501/tests/niivue/subvolume.html",
         "pixelexplorer" : "http://127.0.0.1:5501/tests/niivue/pixelexplorer.html",
         "roistats" : "http://127.0.0.1:5501/tests/niivue/roistats.html"
       },
       "OpenSeaDragon": {
         "sobel" : "http://127.0.0.1:5501/tests/openseadragon/sobel.html",
-        "plotly" : "http://127.0.0.1:5501/tests/openseadragon/plotly.html",
-        "segmentanything" : "http://127.0.0.1:5501/tests/openseadragon/segmentanything.html"
+        "plotly" : "http://127.0.0.1:5501/tests/openseadragon/plotly.html"
       },
       "Papaya" : {
         "sobel" : "http://127.0.0.1:5501/tests/papaya/sobel.html",

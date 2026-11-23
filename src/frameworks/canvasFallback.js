@@ -33,13 +33,8 @@ export class CanvasFallback extends Framework {
     let ctx = canvas.getContext("2d");
 
     let image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let rgba_image = Util.rgba_to_grayscale(image.data);
-
-    if (from_canvas) {
-      return { data: image.data, width: image.width, height: image.height };
-    } else {
-      return { data: rgba_image, width: image.width, height: image.height };
-    }
+    let data = from_canvas ? image.data : Util.rgba_to_grayscale(image.data);
+    return { data, width: image.width, height: image.height };
   }
 
   set_image(new_pixels) {

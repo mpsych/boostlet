@@ -13,6 +13,7 @@ export class Util {
   static looks_like_niivue(obj) {
     if (!obj || typeof obj !== 'object') return false
     if (!Array.isArray(obj.volumes)) return false
+    if (typeof obj.getCanvasImage === 'function') return true // NiiVue 1.0
     if (!obj.scene || typeof obj.scene !== 'object') return false
     if (!obj.opts || obj.opts.sliceType === undefined) return false
     if (typeof obj.updateGLVolume !== 'function') return false
@@ -43,44 +44,35 @@ export class Util {
 
     let framework = null;
 
-    // fast path: check known names first
-    if (Util.looks_like_niivue(window.nv)) {
+    // known names, then NiiVue web components (they expose the instance even on ES module pages),
+    // then the slow scan of window for anything that structurally matches niivue
+    const element = window.document.querySelector('niivue-viewer, niivue-scene');
+    const element_nv = element && (element.nv ?? element.scene?.getNiivue(0));
+    const found = [window.nv, window.niivue, element_nv].find(Util.looks_like_niivue) || Util.scan_window_for_niivue();
 
-      framework = new NiiVue(window.nv);
+    if (found) {
 
-    } else if (Util.looks_like_niivue(window.niivue)) {
+      framework = new NiiVue(found);
 
-      framework = new NiiVue(window.niivue);
+    } else if (Util.is_defined(window.cornerstone)) {
+
+      framework = new Cornerstone2D(window.cornerstone);
+
+    } else if (Util.is_defined(window.r)) {
+
+      framework = new Xtk(window.r);
+
+    } else if (Util.is_defined(window.OpenSeadragon)) {
+
+      framework = new OpenSeaDragon(window.OpenSeadragon);
+
+    } else if (Util.is_defined(window.papayaContainers)) {
+
+      framework = new Papaya(window.papayaContainers)
 
     } else {
 
-      // this is the slow path which scans window for any object that structurally matches niivue
-      const found = Util.scan_window_for_niivue()
-      if (found) {
-
-        framework = new NiiVue(found);
-
-      } else if (Util.is_defined(window.cornerstone)) {
-
-        framework = new Cornerstone2D(window.cornerstone);
-
-      } else if (Util.is_defined(window.r)) {
-
-        framework = new Xtk(window.r);
-
-      } else if (Util.is_defined(window.OpenSeadragon)) {
-
-        framework = new OpenSeaDragon(window.OpenSeadragon);
-
-      } else if (Util.is_defined(window.papayaContainers)) {
-
-        framework = new Papaya(window.papayaContainers)
-
-      } else {
-
-        framework = new CanvasFallback();
-
-      }
+      framework = new CanvasFallback();
 
     }
 
@@ -90,18 +82,8 @@ export class Util {
 
   static async load_script(url, callback) {
 
-    if (typeof window.Object.global === 'undefined') {
-      // introducing hack to make it work for openneuro
-      // but only do it once
-      window.Object.defineProperty(window.Object.prototype, 'global', {
-        get( ){
-          return window;
-        },
-        set(newGlobal) {
-          globalThis = newGlobal;
-        }
-      });
-    }
+    // some libraries (e.g. on openneuro) expect a free `global`
+    window.global ??= window;
 
     const script = window.document.createElement("script")
     script.type = "text/javascript"
@@ -112,7 +94,6 @@ export class Util {
     }
 
     window.document.head.appendChild(script);
-    eval(script);
 
   }
 
@@ -144,13 +125,7 @@ export class Util {
     let offscreen_ctx = offscreen.getContext('2d');
 
     let imgdata = offscreen_ctx.createImageData(offscreen.width, offscreen.height);
-    let pxdata = imgdata.data;
-
-    for (var i =0; i<pxdata.length;i++) {
-        
-      pxdata[i] = uint8array[i];
-
-    }
+    imgdata.data.set(uint8array);
       // update canvas with new data
     offscreen_ctx.putImageData(imgdata, 0, 0);
     
@@ -304,7 +279,7 @@ export class Util {
     hint.style.fontWeight = 'bold';
     hint.style.textAlign = 'center';
 
-    hint.innerHTML = message;
+    hint.textContent = message;
     
     window.document.body.appendChild(hint);
 

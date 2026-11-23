@@ -141,3 +141,6 @@ tests/scripts/images/Test*.png
 # validation volumes are rebuilt from the openneuro file so keep them out of git
 tests/validation/*.nii
 tests/validation/*.nii.gz
+# local developer and audit notes
+CLAUDE.md
+audit_*.md

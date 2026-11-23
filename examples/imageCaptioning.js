@@ -6,10 +6,12 @@ script.src = "https://boostlet.org/dist/boostlet.min.js";
 
 script.onload = run;
 script.onerror = function() { alert('Image Captioning could not load Boostlet'); };
+// Hugging Face's OpenAI-compatible router. BLIP (the old captioner) has no inference provider any
+// more, so ask a served vision-language model instead.
 // var not const so loading this twice on one page does not throw
-var API_url = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
-// token removed from the repo, set your own hugging face token here
-var API_TOKEN = ''
+var API_url = "https://router.huggingface.co/v1/chat/completions"
+var MODEL = "google/gemma-4-31B-it"
+var API_TOKEN = null // asked at run time; never commit a token
 
 // skip loading boostlet again when the page already has it
 if (window.Boostlet) run(); else document.head.appendChild(script);
@@ -19,41 +21,47 @@ async function run() {
   // detect visualization framework
   Boostlet.init();
 
-  if (!API_TOKEN) {
-    Boostlet.hint('Image Captioning needs a Hugging Face token set in the script', 5000);
-    return;
-  }
-
-  try {
-    Boostlet.hint('Image Captioning sending the slice', 2000);
-    const requestData = await request();
-    console.log(requestData);
-
-    requestDataText = requestData[0]['generated_text']
-    // display the image captioning text
-    displayText(requestDataText);
-  } catch (e) {
-    Boostlet.hint('Image Captioning failed: ' + e.message, 5000);
-  }
+  displayText(await request().catch(e => `Captioning failed: ${e.message ?? e}`));
 
 }
 
 async function request() {
 
-  image = Boostlet.get_image(true); // grab image from canvas
-  pixels = image.data;
-  width = image.width;
-  height = image.height;
+  API_TOKEN = API_TOKEN || prompt('This sends the current view to Hugging Face (and its inference providers) for captioning.\nHugging Face access token (huggingface.co/settings/tokens):');
+  if (!API_TOKEN) return 'Captioning cancelled';
 
-  png_image = Boostlet.convert_to_png(pixels, width, height);
-
-  const response = await fetch(API_url, {
-    headers: { Authorization: `Bearer ${API_TOKEN}` },
-    method: "POST",
-    body: png_image,
+  // the displayed view as RGBA: canvas pixels, except on NiiVue where get_image(true) means raw
+  // voxels and get_image() is the rendered view in grayscale
+  let rgba, image;
+  if (Boostlet.framework.name === 'niivue') {
+    image = Boostlet.get_image();
+    rgba = new Uint8Array(image.data.length * 4).fill(255);
+    for (let i = 0; i < image.data.length; i++) rgba[4 * i] = rgba[4 * i + 1] = rgba[4 * i + 2] = image.data[i];
+  } else {
+    image = Boostlet.get_image(true);
+    rgba = image.data;
+  }
+  const png = Boostlet.convert_to_png(rgba, image.width, image.height);
+  const dataUrl = await new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(new Blob([png], { type: 'image/png' }));
   });
 
-  return await response.json();
+  const response = await fetch(API_url, {
+    headers: { Authorization: `Bearer ${API_TOKEN}`, 'Content-Type': 'application/json' },
+    method: "POST",
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 80,
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: 'Describe this image in one short sentence.' },
+        { type: 'image_url', image_url: { url: dataUrl } }
+      ] }]
+    }),
+  });
+  const result = await response.json();
+  return result.choices?.[0]?.message?.content ?? `Captioning failed: ${result.error?.message ?? result.error ?? response.status}`;
 
 }
 

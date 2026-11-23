@@ -62,11 +62,11 @@ function run() {
       setTimeout(() => {
 
         const meshObj = Boostlet.framework.instance.meshes[0];
-        const verts = meshObj.pts;
+        // NiiVue 1.0 keeps tracts in mesh.trx; same layout as 0.6 pts/offsetPt0
+        const offsetPt0 = meshObj.trx?.offsets ?? meshObj.offsetPt0;
 
-        if (meshObj.offsetPt0 && meshObj.offsetPt0.length > 1) {
-          const pts = new Float32Array(meshObj.pts);
-          const offsetPt0 = meshObj.offsetPt0;
+        if (offsetPt0 && offsetPt0.length > 1) {
+          const pts = meshObj.trx?.vertices ?? new Float32Array(meshObj.pts);
 
           const fiberGroup = new THREE.Group();
 
