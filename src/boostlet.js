@@ -1,4 +1,5 @@
 import {Util} from './util.js';
+import {NiiVue} from './frameworks/niivue.js';
 
 export class Boostlet {
 
@@ -20,9 +21,9 @@ export class Boostlet {
 
     if (typeof name != 'undefined' && typeof instance != 'undefined') {
 
-      console.log('Framework forced by user!');
-      throw "Forced Framework Not Implemented.";
-      // TODO
+      // ES module pages (e.g. NiiVue 1.0) keep the instance off window: Boostlet.init('niivue', nv)
+      if (name !== 'niivue') throw "Forced Framework Not Implemented.";
+      this.framework = new NiiVue(instance);
 
     } else {
 
@@ -113,6 +114,13 @@ export class Boostlet {
 
     return this.framework.set_mask(new_mask);
 
+  }
+
+  /**
+   * NiiVue: 0 axial, 1 coronal, 2 sagittal, 3 multiplanar, 4 render.
+   */
+  slice_type() {
+    return this.framework.slice_type();
   }
 
   get_dims() {

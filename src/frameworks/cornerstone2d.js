@@ -1,6 +1,5 @@
 import {Framework} from '../framework.js';
 
-import {Util} from '../util.js';
 
 import {CanvasFallback} from './canvasFallback.js';
 

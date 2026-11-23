@@ -11,16 +11,11 @@ script.onerror = function() { alert('Trako could not load Boostlet'); };
 if (window.Boostlet) script.onload(); else document.head.appendChild(script);
 
 //
-// THIS ONLY WORKS WITH NIIVUE RIGHT NOW
+// THIS ONLY WORKS WITH NIIVUE RIGHT NOW (0.6 and 1.0)
 //
 async function run() {
 
   Boostlet.hint('Trako loading', 2000);
-  
-  // load example fiber (very small and fast)
-  // we need it as a NVMesh template
-  nvmesh = await niivue.addMeshFromUrl({'url':'https://niivue.github.io/niivue/images/colby.trk'})
-  
 
   // detect visualization framework
   Boostlet.init();
@@ -46,8 +41,6 @@ function lib_load_callback() {
   loaded++;
 
   if (loaded == libs.length) {
-
-    console.log('all libs loaded');
 
     container = window.document.createElement('div');
     container.id = 'dropzone';
@@ -75,70 +68,53 @@ function lib_load_callback() {
   
 }
 
-function onDrop(e) {
+async function onDrop(e) {
 
-    e.stopPropagation();
-    e.preventDefault();
+  e.stopPropagation();
+  e.preventDefault();
 
-    console.log('file dropped!');
+  const f = e.dataTransfer.files[0];
+  if (!/\.tko$/i.test(f?.name)) {
+    Boostlet.hint('Please drop a .tko file', 3000);
+    return;
+  }
 
+  try {
+    const fibers = new xtkTrakoReader().parse(JSON.parse(await f.text()));
+    // load the fibers as an in-memory .tck, which NiiVue 0.6 and 1.0 both read like any tract file
+    const tck = fibersToTck(fibers.points.da);
+    const nv = Boostlet.framework.instance;
+    if (Boostlet.framework.v1) await nv.addMesh({ url: new File([tck], 'trako.tck') });
+    else await nv.loadFromArrayBuffer(tck.buffer, 'trako.tck');
+    container.remove();
+  } catch (err) {
+    Boostlet.hint(`Could not load ${f.name}: ${err.message ?? err}`, 5000);
+  }
 
+}
 
-    var files = e.dataTransfer.files;
-
-    for ( var i = 0; i < files.length; i++) {
-
-      var f = files[i];
-      var _fileName = f.name;
-      var _fileExtension = _fileName.split('.').pop().toUpperCase();
-
-      if (_fileExtension != 'TKO') {
-
-        console.log('File format invalid!');
-        return;
-
-      }
-
-      var reader = new FileReader();
-
-      reader.onload = function(e) {
-
-        console.log(e);
-
-        var r = new xtkTrakoReader();
-        fibers = r.parse(JSON.parse(e.target.result));
-
-        // now we have an X.fibers object with all points
-        nvmesh.pts = fibers.points.da;
-
-        number_of_fibs = fibers.points.da.length / 3 / 2;
-
-        offsets = [];
-        for (var i = 0; i < number_of_fibs; i += 2) {
-
-          offsets.push(i);
-
-        }
-
-        nvmesh.offsetPt0 = new Uint32Array(offsets);
-
-        nvmesh.fiberLength = 0.001;
-        nvmesh.fiberLengths = null;
-
-        // this sets up our NVMesh for the TRAKO data
-        nvmesh.updateFibers(niivue.gl);
-
-        // and repaints everything!
-        niivue.updateGLVolume()
-
-        // hide the container
-        window.document.body.removeChild(container);
-
-
-      };
-
-      reader.readAsText(f);
-
+// TRAKO decodes fibers as GL line segments (consecutive point pairs). Join touching segments into
+// streamlines and write MRtrix .tck: float32 xyz per point, NaN after each streamline, Inf at the end.
+function fibersToTck(points) {
+  const OFFSET = 256; // header is padded to this many bytes
+  // worst case per segment: separator + 2 points = 9 floats; plus leading NaN and trailing NaN + Inf
+  const tck = new Uint8Array(OFFSET + (points.length * 1.5 + 9) * 4);
+  const xyz = new Float32Array(tck.buffer, OFFSET);
+  // Leading NaN: NiiVue's TCK readers (0.6 and 1.0rc, fix: niivue/mono#623) overwrite the first offset
+  // with the end of streamline 0 and so drop it; an empty streamline in front absorbs that.
+  xyz.fill(NaN, 0, 3);
+  let n = 3, count = 0;
+  for (let i = 0; i < points.length; i += 6) {
+    const continues = i > 0 && points[i] === points[i - 3] && points[i + 1] === points[i - 2] && points[i + 2] === points[i - 1];
+    if (!continues) {
+      if (i > 0) { xyz[n++] = NaN; xyz[n++] = NaN; xyz[n++] = NaN; }
+      xyz[n++] = points[i]; xyz[n++] = points[i + 1]; xyz[n++] = points[i + 2];
+      count++;
     }
-
+    xyz[n++] = points[i + 3]; xyz[n++] = points[i + 4]; xyz[n++] = points[i + 5];
+  }
+  xyz.set([NaN, NaN, NaN, Infinity, Infinity, Infinity], n);
+  n += 6;
+  tck.set(new TextEncoder().encode(`mrtrix tracks\ndatatype: Float32LE\ncount: ${count}\nfile: . ${OFFSET}\nEND\n`));
+  return tck.slice(0, OFFSET + n * 4);
 }

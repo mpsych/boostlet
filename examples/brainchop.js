@@ -24,6 +24,5 @@ function run() {
   moduleScript.src = "https://boostlet.org/examples/brainchop_runner.js";  
   moduleScript.onerror = function() { Boostlet.hint('Brainchop could not load its runner', 5000); };
   document.head.appendChild(moduleScript);
-  Boostlet.hint('Brainchop running, this can take a minute', 5000);
 
 };

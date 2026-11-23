@@ -158,15 +158,17 @@ CATEGORY = "Collaboration"
     const vol = nv.volumes?.[0]
     // index explicitly, after loadDocument crosshairPos is a plain object
     // like {0: .5, 1: .5, 2: .5} and Array.from would turn it into []
-    const pos = nv.scene?.crosshairPos
+    const pos = Boostlet.framework.crosshair_pos()
     const snap = {
       crosshairPos: pos ? [0, 1, 2].map(i => pos[i]) : [0.5, 0.5, 0.5],
-      sliceType: nv.opts?.sliceType ?? 0,
+      sliceType: Boostlet.slice_type() ?? 0,
       colormap: vol?.colormap ?? null,
-      cal_min: vol?.cal_min ?? null,
-      cal_max: vol?.cal_max ?? null,
+      cal_min: vol?.cal_min ?? vol?.calMin ?? null, // 0.6 ?? 1.0
+      cal_max: vol?.cal_max ?? vol?.calMax ?? null,
       // 3d camera as azimuth elevation zoom and the three clip plane values
-      camera: [nv.scene?.renderAzimuth, nv.scene?.renderElevation, nv.scene?.volScaleMultiplier, ...(nv.scene?.clipPlaneDepthAziElev || [])]
+      camera: Boostlet.framework.v1
+        ? [nv.azimuth, nv.elevation, nv.scaleMultiplier, ...nv.getClipPlaneDepthAziElev(0)]
+        : [nv.scene?.renderAzimuth, nv.scene?.renderElevation, nv.scene?.volScaleMultiplier, ...(nv.scene?.clipPlaneDepthAziElev || nv.scene?.clipPlaneDepthAziElevs?.[0] || [])] // 0.66 keeps a list
     }
     if (!full) return snap
     return {
@@ -179,23 +181,40 @@ CATEGORY = "Collaboration"
 
   function applyDiff(diff) {
     const nv = state.nv
+    const v1 = Boostlet.framework.v1
     // an empty or partial crosshair blanks every slice, so ignore it
     if (diff.crosshairPos?.length === 3 && diff.crosshairPos.every(Number.isFinite)) {
-      nv.scene.crosshairPos = new Float32Array(diff.crosshairPos)
-      nv.drawScene?.()
-      // so other boostlets see the move
-      nv.createOnLocationChange?.()
+      const pos = new Float32Array(diff.crosshairPos)
+      // 1.0's setter redraws and emits locationChange (so other boostlets see the move)
+      if (v1) nv.crosshairPos = pos
+      else { nv.scene.crosshairPos = pos; nv.drawScene(); nv.createOnLocationChange() }
     }
-    if (diff.sliceType !== undefined && nv.opts.sliceType !== diff.sliceType) nv.setSliceType?.(diff.sliceType)
+    if (diff.sliceType !== undefined && Boostlet.slice_type() !== diff.sliceType) {
+      if (v1) nv.sliceType = diff.sliceType
+      else nv.setSliceType(diff.sliceType)
+    }
     // a partial or broken camera is ignored like a broken crosshair
     if (diff.camera?.length === 6 && diff.camera.every(Number.isFinite)) {
       const [azimuth, elevation, zoom, ...clip] = diff.camera
-      nv.setRenderAzimuthElevation?.(azimuth, elevation)
-      nv.setScale?.(zoom)
-      nv.setClipPlane?.(clip)
+      if (v1) {
+        nv.azimuth = azimuth
+        nv.elevation = elevation
+        nv.scaleMultiplier = zoom
+        nv.setClipPlaneDepthAziElev(...clip, 0)
+      } else {
+        nv.setRenderAzimuthElevation?.(azimuth, elevation)
+        nv.setScale?.(zoom)
+        nv.setClipPlane?.(clip)
+      }
     }
     const vol = nv.volumes?.[0]
-    if (vol) {
+    if (vol && v1) {
+      const update = {}
+      if (diff.colormap && diff.colormap !== vol.colormap) update.colormap = diff.colormap
+      if (diff.cal_min != null) update.calMin = diff.cal_min
+      if (diff.cal_max != null) update.calMax = diff.cal_max
+      if (Object.keys(update).length) nv.setVolume(0, update)
+    } else if (vol) {
       let dirty = false
       if (diff.colormap && diff.colormap !== vol.colormap) { nv.setColormap?.(vol.id, diff.colormap); dirty = true }
       if (diff.cal_min != null) { vol.cal_min = diff.cal_min; dirty = true }
@@ -208,15 +227,20 @@ CATEGORY = "Collaboration"
     for (const k of Object.keys(diff)) if (k in cur) state.last[k] = cur[k]
   }
 
+  // scene and peer messages are untrusted: check parsed protocol/host, not substrings
+  function parseHttps(url) {
+    try { const u = new URL(url); return u.protocol === 'https:' ? u : null } catch (e) { return null }
+  }
+
   function isDropboxUrl(url) {
-    return url && (url.includes('dropboxusercontent.com') || url.includes('dropbox.com'))
+    return parseHttps(url)?.hostname === 'dl.dropboxusercontent.com'
   }
 
   async function applyScene(scene) {
     const nv = state.nv
     // always load from dropbox even if a volume is already present
     // a dropbox url means the host explicitly shared a modified volume
-    if (scene.volumeUrl && (isDropboxUrl(scene.volumeUrl) || !nv.volumes?.length)) {
+    if (parseHttps(scene.volumeUrl) && (isDropboxUrl(scene.volumeUrl) || !nv.volumes?.length)) {
       Boostlet.hint('loading volume from dropbox', 3000)
       try { await nv.loadVolumes([{ url: scene.volumeUrl }]) }
       catch (e) { Boostlet.hint('could not load volume from url', 4000) }
@@ -256,11 +280,11 @@ CATEGORY = "Collaboration"
 
     if (!scene) { setSyncParam(code); updatePanel(code); connectToRoom(code); return }
 
-    // only follow https pages so a scene cant send a javascript url
+    // only follow https pages so a scene cant send a javascript url, and ask first
     if (scene.originUrl && !isSamePage(scene.originUrl, location.href)) {
-      let target
-      try { target = new URL(scene.originUrl) } catch (e) { target = null }
-      if (!target || target.protocol !== 'https:') { Boostlet.hint('scene has an invalid page url', 4000); return }
+      const target = parseHttps(scene.originUrl)
+      if (!target) { Boostlet.hint('scene has an invalid page url', 4000); return }
+      if (!confirm(`This sync room was opened on ${target.origin}. Go there?`)) return
       target.searchParams.set('sync', code)
       location.href = target.toString()
       return
@@ -362,13 +386,9 @@ CATEGORY = "Collaboration"
     const vol = state.nv.volumes?.[0]
     if (!vol?.img) { Boostlet.hint('no volume to upload', 3000); return }
 
-    const nifti = buildNifti1({
-      dims: Array.from(vol.hdr.dims), pixDims: Array.from(vol.hdr.pixDims),
-      datatypeCode: vol.hdr.datatypeCode, numBitsPerVoxel: vol.hdr.numBitsPerVoxel,
-      scl_slope: vol.hdr.scl_slope, scl_inter: vol.hdr.scl_inter,
-      sform_code: vol.hdr.sform_code, qform_code: vol.hdr.qform_code,
-      affine: vol.hdr.affine
-    }, vol.img)
+    // NiiVue writes the NIfTI itself (full header), 1.0 saveVolume / 0.6 saveImage
+    const nv = state.nv
+    const nifti = await (Boostlet.framework.v1 ? nv.saveVolume({ volumeByIndex: 0, filename: '' }) : nv.saveImage({ filename: '', volumeByIndex: 0 }))
 
     Boostlet.hint('uploading to dropbox', 3000)
     const url = await dropboxUpload('/volume_' + Date.now() + '.nii', nifti)
@@ -407,7 +427,7 @@ CATEGORY = "Collaboration"
     popup.location.href = authUrl
 
     const authCode = await new Promise(resolve => {
-      const onMsg = e => { if (e.data?.type === 'dropbox-auth') { window.removeEventListener('message', onMsg); resolve(e.data.code) } }
+      const onMsg = e => { if (e.source === popup && e.origin === new URL(DROPBOX_REDIRECT).origin && e.data?.type === 'dropbox-auth') { window.removeEventListener('message', onMsg); resolve(e.data.code) } }
       window.addEventListener('message', onMsg)
       const t = setInterval(() => {
         try { if (popup.closed) { clearInterval(t); window.removeEventListener('message', onMsg); resolve(null) } }
@@ -428,34 +448,6 @@ CATEGORY = "Collaboration"
       state.dropboxToken = data.access_token
       return state.dropboxToken
     } catch (e) { Boostlet.hint('dropbox auth failed', 4000); return null }
-  }
-
-  // ===== nifti builder =====
-
-  function buildNifti1(meta, voxelData) {
-    const hdr = new ArrayBuffer(352)
-    const d = new DataView(hdr)
-    d.setInt32(0, 348, true)
-    for (let i = 0; i < 8; i++) d.setInt16(40 + i * 2, meta.dims[i] || 0, true)
-    d.setInt16(70, meta.datatypeCode || 16, true)
-    d.setInt16(72, meta.numBitsPerVoxel || 32, true)
-    for (let i = 0; i < 8; i++) d.setFloat32(76 + i * 4, meta.pixDims[i] || 1, true)
-    d.setFloat32(108, 352, true)
-    d.setFloat32(112, meta.scl_slope || 1, true)
-    d.setFloat32(116, meta.scl_inter || 0, true)
-    // only the sform rows are written below so the file must not claim a qform
-    d.setInt16(252, 0, true)
-    d.setInt16(254, meta.sform_code || 1, true)
-    if (meta.affine) {
-      let k = 0
-      for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++) d.setFloat32(280 + (k++) * 4, meta.affine[i][j] || 0, true)
-    }
-    const bytes = new Uint8Array(hdr)
-    bytes[344] = 110; bytes[345] = 43; bytes[346] = 49; bytes[347] = 0
-    const out = new Uint8Array(352 + voxelData.byteLength)
-    out.set(bytes)
-    out.set(new Uint8Array(voxelData.buffer, voxelData.byteOffset, voxelData.byteLength), 352)
-    return out
   }
 
   // ===== pusher + webrtc =====
@@ -618,11 +610,7 @@ CATEGORY = "Collaboration"
         applyDiff(msg.patch)
         return
       }
-      if (msg.type === 'volume-ready' && msg.volumeUrl) {
-        // only load volumes shared through dropbox
-        let host = ''
-        try { host = new URL(msg.volumeUrl).hostname } catch (e) {}
-        if (!/(^|\.)dropbox(usercontent)?\.com$/.test(host)) return
+      if (msg.type === 'volume-ready' && isDropboxUrl(msg.volumeUrl)) {
         // always load the dropbox volume regardless of whether a volume is already present
         Boostlet.hint('loading volume from dropbox', 3000)
         state.nv.loadVolumes([{ url: msg.volumeUrl }]).then(() => {

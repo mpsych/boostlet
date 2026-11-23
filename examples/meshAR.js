@@ -62,24 +62,27 @@ function run() {
       setTimeout(() => {
 
         const meshObj = Boostlet.framework.instance.meshes[0];
-        const verts = meshObj.pts;
+        // NiiVue 1.0 names (positions, indices, color 0-1) ?? 0.6 names (pts, tris, rgba255)
+        const verts = meshObj.positions ?? meshObj.pts;
+        const tris = meshObj.indices ?? meshObj.tris;
 
-        if (meshObj.tris && meshObj.tris.length > 0) {
-          const indices = new Uint32Array(meshObj.tris);
+        if (tris && tris.length > 0) {
+          const indices = new Uint32Array(tris);
 
           const geometry = new THREE.BufferGeometry();
           geometry.setAttribute('position', new THREE.BufferAttribute(verts, 3));
           geometry.setIndex(new THREE.BufferAttribute(indices, 1));
           geometry.computeVertexNormals();
 
-          const rgba = meshObj.rgba255 || [0, 204, 136, 255]; // default minty fallback
-          const color = new THREE.Color(rgba[0] / 255, rgba[1] / 255, rgba[2] / 255);
+          // 0-1 RGBA: 0.6 rgba255 scaled, else 1.0 color, else minty default
+          const rgba = meshObj.rgba255 ? Array.from(meshObj.rgba255, c => c / 255) : meshObj.color ?? [0, 0.8, 0.53, 1];
+          const color = new THREE.Color(rgba[0], rgba[1], rgba[2]);
 
           const material = new THREE.MeshStandardMaterial({
             side: THREE.DoubleSide,
             color: color,
-            opacity: rgba[3] / 255,
-            transparent: rgba[3] < 255
+            opacity: rgba[3],
+            transparent: rgba[3] < 1
           });
 
           const mesh = new THREE.Mesh(geometry, material);

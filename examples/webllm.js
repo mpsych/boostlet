@@ -261,10 +261,12 @@ class ChatUI {
         <div class="msg-bubble">
             ${profileImg}
             <div>
-                <div>${text}</div>
+                <div class="msg-text"></div>
             </div>
         </div>
     `;
+    // model output and user input are text, not markup
+    messageWrapper.querySelector('.msg-text').textContent = text;
 
     chat.appendChild(messageWrapper);
     chat.scrollTop = chat.scrollHeight;
